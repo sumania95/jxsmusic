@@ -1,0 +1,468 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  @@index([name])
+}
+
+model Genre {
+  id          String       @id @default(cuid())
+  name        String
+  is_featured Boolean      @default(false)
+  slug        String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  genre_track GenreTrack[]
+
+  @@index([name])
+}
+
+model Tag {
+  id          String     @id @default(cuid())
+  name        String
+  is_featured Boolean    @default(false)
+  slug        String     @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  tag_track   TagTrack[]
+
+  @@index([name])
+}
+
+model Track {
+  id             String          @id @default(cuid())
+  slug           String?         @unique
+  title          String?
+  artist         String?
+  description    String?         @db.Text //initial genre
+  in_key         String?
+  filename       String?         @db.Text
+  filetype       String?         @default("audio/mpeg")
+  size           Int             @default(0)
+  energy         Int             @default(5)
+  bpm_start      Int             @default(0)
+  bpm_end        Int             @default(0)
+  release_year   Int             @default(0)
+  duration       Int             @default(0)
+  loopLength     Int             @default(90)
+  regionTime     Json            @default("{\"start\":0,\"end\":90}") // store as JSON
+  price          Int             @default(0)
+  keywords       String?         @db.Text
+  download_key   String?
+  preview_key    String?
+  preview_count  Int             @default(0)
+  download_count Int             @default(0)
+  is_opm         Boolean         @default(false)
+  is_explicit    Boolean         @default(false)
+  is_exclusive   Boolean         @default(false)
+  is_published   Boolean         @default(false)
+  is_disabled    Boolean         @default(false)
+  is_reviewed    Boolean         @default(false)
+  releaseAt      DateTime
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  genre_track    GenreTrack[]
+  tag_track      TagTrack[]
+  spotify_track  SpotifyTrack[]
+  cart           Cart[]
+  orderPurchase  OrderPurchase[]
+  trackAlbum     TrackAlbum[]
+
+  @@unique([title, artist, is_explicit])
+  @@index([title, artist])
+}
+
+model Album {
+  id            String          @id @default(cuid())
+  name          String?
+  artist        String?         @default("Various Artists")
+  image         String?
+  imageKey      String?
+  price         Int             @default(0)
+  isActive      Boolean         @default(true)
+  slug          String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackAlbum    TrackAlbum[]
+  orderPurchase OrderPurchase[]
+  cart          Cart[]
+
+  @@index([name])
+}
+
+model TrackAlbum {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  albumId   String
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([albumId, trackId])
+}
+
+//CART ONLY
+model Cart {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  counter     Int      @default(1)
+  status      String   @default("cart")
+  price       Int      @default(0)
+  is_credit   Boolean  @default(false)
+  is_purchase Boolean  @default(false)
+  is_album    Boolean  @default(false)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId     String?
+  track       Track?   @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  albumId     String?
+  album       Album?   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId, albumId])
+}
+
+model Order {
+  id             String          @id @default(cuid())
+  referenceId    String          @unique // internal reference passed to the payment provider
+  userId         String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount         Int             @default(0)
+  discountType   String?
+  discountValue  Int             @default(0)
+  discountAmount Int             @default(0)
+  finalAmount    Int             @default(0)
+  currency       String          @default("USD")
+  purpose        String          @default("STORE") // STORE | CREDIT_PACK
+  creditAmount   Int             @default(0)
+  paypalFee      Int             @default(0) // actual fee reported by PayPal, in cents
+  status         String          @default("PENDING") // PENDING | PAID | CANCELLED | FAILED | REFUNDED
+  checkoutUrl    String? // provider approval URL
+  checkoutId     String? // provider order/session id
+  expiredAt      DateTime?
+  paidAt         DateTime?
+  cancelledAt    DateTime?
+  refundedAt     DateTime?
+  failedReason   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  couponId       String? //optional for webhook api
+  orderPurchase  OrderPurchase[]
+  webhookLog     WebhookLog[]
+}
+
+model OrderPurchase {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  counter       Int      @default(1)
+  price         Int      @default(0)
+  priceDiscount Int      @default(0)
+  finalPrice    Int      @default(0)
+  is_album      Boolean  @default(false)
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trackId       String?
+  track         Track?   @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  albumId       String?
+  album         Album?   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  uploaderId    String? // 👈 NEW: track.userId or album.userId
+  uploader      User?    @relation(fields: [uploaderId], references: [id])
+}
+
+model Coupon {
+  id        String    @id @default(cuid())
+  name      String?
+  code      String
+  year      Int       @default(0)
+  type      String    @default("PERCENT") // "PERCENT" | "FIXED"
+  value     Int
+  minSpend  Int       @default(0)
+  isActive  Boolean   @default(true)
+  startsAt  DateTime?
+  expiresAt DateTime?
+
+  usages CouponUsage[]
+
+  @@unique([code, year])
+}
+
+model CouponUsage {
+  id       String   @id @default(cuid())
+  couponId String
+  userId   String
+  usedAt   DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@unique([couponId, userId]) // 🔐 ONE USE PER USER
+}
+
+model GenreTrack {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  genreId   String
+  genre     Genre    @relation(fields: [genreId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([genreId, trackId])
+}
+
+model TagTrack {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, trackId])
+}
+
+model Crate {
+  id String @id @default(cuid())
+
+  // Spotify identifiers
+  spotifyPlaylistId   String?
+  spotifyPlaylistUrl  String?
+  spotifyPlaylistName String?
+
+  // Images
+  spotifyImageUrl String?
+
+  // Ownership
+  spotifyOwnerId   String?
+  spotifyOwnerName String?
+
+  // Metadata
+  spotifyTrackCount Int?
+  spotifyFollowers  Int?
+  spotifySnapshotId String?
+  spotifyIsPublic   Boolean?
+
+  // Sync & source
+  spotifyLastSyncedAt DateTime?
+  source              String    @default("spotify")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  crate_spotify CrateSpotify[]
+}
+
+model CrateSpotify {
+  id        String  @id @default(cuid())
+  crateId   String
+  crate     Crate   @relation(fields: [crateId], references: [id], onDelete: Cascade)
+  spotifyId String
+  spotify   Spotify @relation(fields: [spotifyId], references: [id], onDelete: Cascade)
+
+  @@unique([spotifyId, crateId])
+}
+
+model Spotify {
+  id            String         @id @default(cuid())
+  name          String // Track name, e.g., "Believer"
+  artists       String // Comma-separated artist names, e.g., "Imagine Dragons"
+  spotifyId     String         @unique
+  previewUrl    String? // 30-second preview URL
+  spotifyUrl    String? // Full Spotify track link
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  spotify_track SpotifyTrack[]
+  crate_spotify CrateSpotify[]
+}
+
+model SpotifyTrack {
+  id        String  @id @default(cuid())
+  trackId   String
+  track     Track   @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  spotifyId String
+  spotify   Spotify @relation(fields: [spotifyId], references: [id], onDelete: Cascade)
+
+  @@unique([spotifyId, trackId])
+}
+
+// Necessary for Next auth
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token_expires_in Int?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?   @default("https://0x84kengln.ufs.sh/f/KieKmjSQ0oPZp4uQWX3FjpLRT2N8HyDs0KBvGXZhotwaU6bz")
+  imageKey      String?
+
+  //
+  username  String? //DJ NAME
+  biography String? @db.Text
+
+  //become a uploader remixer
+  linkToListen    String? @db.Text
+  isRequestEditor Boolean @default(false)
+  //social media account
+  link_facebook   String?
+  link_soundcloud String?
+  link_spotify    String?
+  link_youtube    String?
+  link_instagram  String?
+  link_mixclound  String?
+  link_twitter    String?
+  link_twitch     String?
+
+  credit            Int             @default(0)
+  is_superadmin     Boolean         @default(false)
+  is_admin          Boolean         @default(false)
+  is_uploader       Boolean         @default(false)
+  is_video_uploader Boolean         @default(false)
+  expireAt          DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  cart              Cart[]
+  accounts          Account[]
+  sessions          Session[]
+  posts             Post[]
+  order             Order[]
+  orderPuchase      OrderPurchase[]
+  track             Track[]
+  album             Album[]
+  reviews           Review[]
+  bookings          Booking[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  title      String?
+  message    String    @db.Text
+  status     String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  email          String
+  phone          String
+  eventDate      DateTime
+  eventLocation  String
+  eventType      String
+  expectedGuests Int
+  service        String
+  message        String?  @db.Text
+  selectedDj     String
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, eventDate])
+}
+
+model WebhookLog {
+  id              String   @id @default(cuid())
+  provider        String // e.g. "PAYPAL"
+  event           String? // e.g. "PAID", "EXPIRED" (if available)
+  referenceId     String? // external_id / invoice reference
+  status          String? // payment status
+  payload         Json // raw webhook payload
+  headers         Json? // optional: request headers
+  receivedAt      DateTime @default(now())
+  externalEventId String?  @unique
+
+  // Optional relations
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  @@index([provider])
+  @@index([referenceId])
+  @@index([orderId])
+}
+
+model DmcaRequest {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  companyName        String?
+  address            String?
+  zipCode            String?
+  telephone          String?
+  relationship       String
+  contentTitle       String
+  contentUrl         String
+  additionalComments String?
+  status             String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  createdAt          DateTime @default(now())
+}

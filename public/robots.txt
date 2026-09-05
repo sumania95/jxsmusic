@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.jeff92ayansumania.com
+
+# Sitemaps
+Sitemap: https://www.jeff92ayansumania.com/sitemap.xml

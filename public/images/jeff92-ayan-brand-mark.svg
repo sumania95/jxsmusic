@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">JXS Music</title>
+  <desc id="desc">JXS Music waveform monogram for Jeff92 and Ayan Sumania.</desc>
+  <rect width="96" height="96" rx="22" fill="#111518"/>
+  <rect x="1.5" y="1.5" width="93" height="93" rx="20.5" fill="none" stroke="#FFFFFF" stroke-opacity=".2" stroke-width="3"/>
+  <text x="48" y="51" text-anchor="middle" fill="#FFFFFF" font-family="Inter,Arial,sans-serif" font-size="31" font-weight="950" letter-spacing="-2">J<tspan fill="#B9FF00">X</tspan>S</text>
+  <text x="48" y="70" text-anchor="middle" fill="#B9FF00" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="900" letter-spacing="2.5">MUSIC</text>
+  <path d="M14 82h10l5-7 7 12 8-18 8 14 7-9 7 8h16" fill="none" stroke="#B9FF00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

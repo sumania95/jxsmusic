@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 160" role="img" aria-labelledby="title">
+  <title id="title">Crooklyn Clan</title>
+  <rect width="700" height="160" rx="24" fill="#090b0d"/>
+  <path d="M44 80h58M73 51v58" stroke="#B9FF00" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="73" cy="80" r="48" fill="none" stroke="#F5F3EA" stroke-width="7"/>
+  <text x="145" y="92" fill="#F5F3EA" font-family="Arial Black,Arial,sans-serif" font-size="52" font-weight="900" letter-spacing="-2">CROOKLYN CLAN</text>
+  <text x="149" y="122" fill="#B9FF00" font-family="Arial,sans-serif" font-size="16" font-weight="700" letter-spacing="5">RECORD POOL EDITORS</text>
+</svg>

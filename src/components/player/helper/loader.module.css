@@ -1,0 +1,40 @@
+/* src/components/player/helper/loader.module.css */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.wave {
+  height: 35px;
+  width: 35px;
+  fill: #fff;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scaleY(1);
+    transform-origin: 50% 50%;
+  }
+  
+  50% {
+    transform: scaleY(0.7);
+    transform-origin: 50% 50%;
+  }
+  
+  100% {
+    transform: scaleY(1);
+    transform-origin: 50% 50%;
+  }
+}
+
+.line1 { animation: pulse 0.9s infinite; animation-delay: 0.05s; }
+.line2 { animation: pulse 0.9s infinite; animation-delay: 0.10s; }
+.line3 { animation: pulse 0.9s infinite; animation-delay: 0.15s; }
+.line4 { animation: pulse 0.9s infinite; animation-delay: 0.20s; }
+.line5 { animation: pulse 0.9s infinite; animation-delay: 0.25s; }
+.line6 { animation: pulse 0.9s infinite; animation-delay: 0.30s; }
+.line7 { animation: pulse 0.9s infinite; animation-delay: 0.35s; }
+.line8 { animation: pulse 0.9s infinite; animation-delay: 0.40s; }
+.line9 { animation: pulse 0.9s infinite; animation-delay: 0.45s; }
