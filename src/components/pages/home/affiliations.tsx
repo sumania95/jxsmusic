@@ -15,7 +15,7 @@ export default function Affiliations() {
               Crooklyn Clan editors
             </h2>
             <p className="mt-5 max-w-xl text-sm leading-7 text-zinc-400">
-              Jeff92 and Ayan Sumania are members of the Crooklyn Clan editor community, delivering working-DJ audio and video edits.
+              Jeff92 and Ayan Sumania are members of the Crooklyn Clan editor community, delivering around the globe working-DJs audio and video edits.
             </p>
             <Image src="/images/ccv5-logo-banner.png" alt="Crooklyn Clan" width={700} height={160} className="mt-7 h-auto w-full max-w-md" />
             <a href="https://app.crooklynclan.net/editors/jeff92-%26-ayan-sumania" target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#B9FF00] px-5 py-3 text-sm font-bold text-black">
