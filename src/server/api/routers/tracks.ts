@@ -505,7 +505,7 @@ export const trackRouter = createTRPCRouter({
       const filename =
         `${track.artist} - ${formattedTitle} ` +
         `${track.in_key} ${track.bpm_start}.${previewExtension}`;
-      const preview_key = isVideo?`jsx/video/preview/${input.id}.${previewExtension}`:`jsx/preview/${input.id}.${previewExtension}`
+      const preview_key = isVideo?`jxs/video/preview/${input.id}.${previewExtension}`:`jxs/preview/${input.id}.${previewExtension}`
       const url = `${Initial}/${track.download_key}`
       console.log('starting api')
       if (input.enabledSnippet) {
