@@ -91,6 +91,7 @@ model Track {
   cart           Cart[]
   orderPurchase  OrderPurchase[]
   trackAlbum     TrackAlbum[]
+  downloadTrack  DownloadTrack[]
 
   @@unique([title, artist, is_explicit])
   @@index([title, artist])
@@ -175,6 +176,7 @@ model Order {
   updatedAt      DateTime        @updatedAt
   couponId       String? //optional for webhook api
   orderPurchase  OrderPurchase[]
+  downloadTrack  DownloadTrack[]
   webhookLog     WebhookLog[]
 }
 
@@ -247,6 +249,35 @@ model TagTrack {
   track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
   @@unique([tagId, trackId])
+}
+
+enum TrackAcquisitionType {
+  CREDIT
+  CART
+}
+
+model DownloadTrack {
+  id              String               @id @default(cuid())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  acquisitionType TrackAcquisitionType
+
+  userId          String
+  user            User                 @relation( fields: [userId],references: [id],onDelete: Cascade)
+
+  trackId         String
+  track           Track                @relation(fields: [trackId],references: [id],onDelete: Cascade)
+
+  orderId         String?
+  order           Order?               @relation(fields: [orderId],references: [id],onDelete: SetNull)
+
+  creditsSpent    Int                  @default(0)
+
+  @@unique([userId, trackId])
+  @@index([acquisitionType])
+  @@index([createdAt])
+  @@index([orderId])
 }
 
 model Crate {
@@ -381,6 +412,7 @@ model User {
   posts             Post[]
   order             Order[]
   orderPuchase      OrderPurchase[]
+  downloadTrack     DownloadTrack[]
   track             Track[]
   album             Album[]
   reviews           Review[]

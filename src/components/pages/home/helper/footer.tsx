@@ -226,7 +226,7 @@ const Footer = () => {
               >
                 <FaFacebook className="h-4 w-4" />
               </div>
-                <h3>Facebook Fan Page</h3>
+                <h3>Facebook Page</h3>
             </a>
           </div>
         </div>

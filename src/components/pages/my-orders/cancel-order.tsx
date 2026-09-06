@@ -65,7 +65,7 @@ const CancelOrderComponents = (props: Props) => {
         onClick={(e) => e.stopPropagation()} // ✅ ALSO REQUIRED
         disabled={isSubmitting}
         type="submit"
-        className="flex h-8 min-w-[74px] cursor-pointer items-center justify-center rounded-xl border border-red-500/15 bg-red-500/[0.08] px-3 text-[10px] font-semibold whitespace-nowrap text-red-400 transition-all hover:border-red-500/25 hover:bg-red-500/[0.14] hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50 lg:min-w-[92px]"
+        className="flex h-10 min-w-[74px] cursor-pointer items-center justify-center rounded-xl border border-red-500/15 bg-red-500/[0.08] px-3 text-[10px] font-semibold whitespace-nowrap text-red-400 transition-all hover:border-red-500/25 hover:bg-red-500/[0.14] hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50 lg:min-w-[92px]"
       >
         {isSubmitting ? (
           <span className="flex items-center gap-1.5">

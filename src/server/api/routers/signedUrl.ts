@@ -21,6 +21,7 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "generated/prisma";
 
 const MAX_ARTWORK_SIZE = 300 * 1024; // 300 KB
 
@@ -303,7 +304,7 @@ export const signedUrlRouter = createTRPCRouter({
         url: baseUrl,
       };
     }),
-  downloadObject: protectedProcedure
+  downloadObjectOld: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -491,6 +492,341 @@ export const signedUrlRouter = createTRPCRouter({
           filename,
         };
     }),
+    downloadObject: protectedProcedure
+  .input(
+    z.object({
+      id: z.string(),
+      source: z.enum(["track", "pack"]).default("track"),
+    }),
+  )
+  .mutation(async ({ input, ctx }) => {
+    const { s3, session } = ctx;
+    const { id, source } = input;
+    const userId = session.user.id;
+
+    const track = await ctx.db.track.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        artist: true,
+        title: true,
+        bpm_start: true,
+        bpm_end: true,
+        is_explicit: true,
+        is_exclusive: true,
+        in_key: true,
+        release_year: true,
+        download_key: true,
+        filetype: true,
+        user: {
+          select: {
+            image: true,
+          },
+        },
+        genre_track: {
+          select: {
+            genre: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        tag_track: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!track) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Track not found",
+      });
+    }
+
+    if (!track.download_key) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Track download key is missing",
+      });
+    }
+
+    let acquisitionType: "CART" | "CREDIT";
+
+    try {
+      acquisitionType = await ctx.db.$transaction(async (tx) => {
+        /*
+         * Check existing ownership first.
+         *
+         * This allows the customer to download the track again without
+         * spending another credit or creating another DownloadTrack row.
+         */
+        const existingDownload = await tx.downloadTrack.findUnique({
+          where: {
+            userId_trackId: {
+              userId,
+              trackId: id,
+            },
+          },
+          select: {
+            acquisitionType: true,
+          },
+        });
+
+        if (existingDownload) {
+          return existingDownload.acquisitionType;
+        }
+
+        /*
+         * Check for a paid cart or pack purchase.
+         */
+        const purchase = await tx.orderPurchase.findFirst({
+          where:
+            source === "pack"
+              ? {
+                  is_album: true,
+                  order: {
+                    userId,
+                    status: "PAID",
+                  },
+                  album: {
+                    trackAlbum: {
+                      some: {
+                        trackId: id,
+                      },
+                    },
+                  },
+                }
+              : {
+                  order: {
+                    userId,
+                    status: "PAID",
+                  },
+                  OR: [
+                    {
+                      trackId: id,
+                      is_album: false,
+                    },
+                    {
+                      is_album: true,
+                      album: {
+                        trackAlbum: {
+                          some: {
+                            trackId: id,
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+          select: {
+            id: true,
+            orderId: true,
+          },
+        });
+
+        /*
+         * A paid cart or album purchase creates a CART entitlement.
+         */
+        if (purchase) {
+          const downloadTrack = await tx.downloadTrack.create({
+            data: {
+              userId,
+              trackId: id,
+              acquisitionType: "CART",
+              orderId: purchase.orderId,
+              creditsSpent: 0,
+            },
+            select: {
+              acquisitionType: true,
+            },
+          });
+
+          return downloadTrack.acquisitionType;
+        }
+
+        /*
+         * Credits cannot be used when the request specifically represents
+         * a pack download.
+         */
+        if (source === "pack") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "Credits cover individual audio and video edits only. Purchase this pack to download it.",
+          });
+        }
+
+        /*
+         * No entitlement and no cart purchase, so deduct one credit.
+         *
+         * The credit deduction and DownloadTrack creation happen in the
+         * same transaction.
+         */
+        const creditResult = await tx.user.updateMany({
+          where: {
+            id: userId,
+            credit: {
+              gt: 0,
+            },
+          },
+          data: {
+            credit: {
+              decrement: 1,
+            },
+          },
+        });
+
+        if (creditResult.count === 0) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "Purchase this edit or buy the $200 / 180-credit pack to download it.",
+          });
+        }
+
+        const downloadTrack = await tx.downloadTrack.create({
+          data: {
+            userId,
+            trackId: id,
+            acquisitionType: "CREDIT",
+            orderId: null,
+            creditsSpent: 1,
+          },
+          select: {
+            acquisitionType: true,
+          },
+        });
+
+        return downloadTrack.acquisitionType;
+      });
+    } catch (error) {
+      /*
+       * Handle two simultaneous download requests.
+       *
+       * The unique constraint prevents duplicate DownloadTrack rows.
+       * Because creation and credit deduction are in one transaction,
+       * the losing transaction rolls back its credit deduction.
+       */
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existingDownload =
+          await ctx.db.downloadTrack.findUnique({
+            where: {
+              userId_trackId: {
+                userId,
+                trackId: id,
+              },
+            },
+            select: {
+              acquisitionType: true,
+            },
+          });
+
+        if (!existingDownload) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not verify the track acquisition",
+            cause: error,
+          });
+        }
+
+        acquisitionType = existingDownload.acquisitionType;
+      } else {
+        throw error;
+      }
+    }
+
+    /*
+     * Increment on every download, including repeat downloads.
+     * Analytics failure does not block access to the file.
+     */
+    try {
+      await ctx.db.track.update({
+        where: {
+          id,
+        },
+        data: {
+          download_count: {
+            increment: 1,
+          },
+        },
+      });
+    } catch (error) {
+      console.error(
+        `Failed to increment download_count for track ${id}`,
+        error,
+      );
+    }
+
+    const formattedTitle = formatTrackTitle(
+      track.title,
+      track.is_explicit,
+    );
+
+    const isVideo = track.filetype?.includes("video") ?? false;
+    const extension = isVideo ? "mp4" : "mp3";
+
+    const filename =
+      `${track.artist} - ${formattedTitle} ` +
+      `${track.in_key} ${track.bpm_start}.${extension}`;
+
+    const s3Client = new S3Client(s3);
+
+    if (isVideo) {
+      const createSignedUrl = async (
+        disposition: string,
+      ): Promise<string> => {
+        const command = new GetObjectCommand({
+          Bucket: "jxs-music",
+          Key: String(track.download_key),
+          ResponseContentType: track.filetype ?? "video/mp4",
+          ResponseContentDisposition: disposition,
+        });
+
+        return getSignedUrl(s3Client, command);
+      };
+
+      let url: string;
+
+      try {
+        url = await createSignedUrl(
+          contentDisposition(filename),
+        );
+      } catch (error) {
+        console.warn(
+          "Original Content-Disposition failed; using safe fallback",
+          error,
+        );
+
+        url = await createSignedUrl(
+          buildContentDisposition(filename),
+        );
+      }
+
+      return {
+        url,
+        filename,
+        acquisitionType,
+      };
+    }
+
+    return {
+      url: `${Initial}/${track.download_key}`,
+      filename,
+      acquisitionType,
+    };
+  }),
   getObject: publicProcedure
     .input(
       z.object({

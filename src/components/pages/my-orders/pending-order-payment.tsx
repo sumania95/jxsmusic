@@ -29,7 +29,7 @@ export default function PendingOrderPayment({ referenceId }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button className="h-9 w-full gap-2 rounded-xl bg-[#B9FF00] text-xs font-semibold text-black hover:bg-[#B9FF00]/90">
+        <Button className="h-9 w-auto gap-2 rounded-xl bg-[#B9FF00] text-xs font-semibold text-black hover:bg-[#B9FF00]/90">
           <CreditCard className="h-4 w-4" />
           Pay Now
         </Button>

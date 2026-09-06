@@ -365,7 +365,7 @@ const MyOrdersComponents = () => {
 
                   {/* PENDING ACTIONS */}
                   {item.status === "PENDING" && (
-                    <div className="flex w-64 shrink-0 flex-col gap-2">
+                    <div className="flex items-center shrink-0 gap-2">
                       <PendingOrderPayment referenceId={item.referenceId} />
                       <CancelOrderComponents
                         referenceId={String(item.referenceId)}

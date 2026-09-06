@@ -63,14 +63,14 @@ const AdminDataComponent = () => {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           {/* NAVIGATION */}
           <div className="border-b border-white/[0.06] p-3 sm:p-4">
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 rounded-2xl border border-white/[0.06] bg-[#111518]/20 p-1 sm:grid-cols-4 xl:grid-cols-10">
+            <TabsList className="h-auto w-full flex gap-1.5 rounded-2xl border border-white/[0.06] bg-[#111518]/20 p-1">
               <AdminTab value="1" icon={Music2} label="Tracks" />
 
               <AdminTab value="2" icon={Layers3} label="Genres" />
 
               <AdminTab value="3" icon={Tags} label="Tags" />
 
-              <AdminTab value="7" icon={FileQuestion} label="Request" />
+              {/* <AdminTab value="7" icon={FileQuestion} label="Request" /> */}
 
               <AdminTab value="5" icon={Webhook} label="Webhook" />
               <AdminTab value="10" icon={Star} label="Reviews" />
@@ -128,7 +128,7 @@ const AdminTab = ({ value, icon: Icon, label }: AdminTabProps) => {
   return (
     <TabsTrigger
       value={value}
-      className="flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-[9px] font-medium text-zinc-500 transition-all hover:bg-white/[0.04] hover:text-zinc-200 data-[state=active]:bg-[#B9FF00] data-[state=active]:text-black data-[state=active]:shadow-none sm:text-[10px] lg:px-3"
+      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-2 text-[9px] font-medium text-zinc-500 transition-all hover:bg-white/[0.04] hover:text-zinc-200 data-[state=active]:bg-[#B9FF00] data-[state=active]:text-black data-[state=active]:shadow-none sm:text-[10px] lg:px-3"
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
 
