@@ -1,7 +1,7 @@
 "use client"
 
 import ImageThumbnailComponent from "@/components/common/image-thumbnail"
-import { formatCurrency } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { playerState, playlist } from "@/state/globalState"
 import { api } from "@/utils/api"
 import formatDuration from "format-duration"
@@ -18,6 +18,7 @@ import {
   getActiveTrackColumns,
   type TrackColumnKey,
 } from "./header-filter"
+import { Zap } from "lucide-react"
 
 type Props = {
   index_key: number
@@ -57,22 +58,113 @@ type Props = {
   visibleColumns?: readonly TrackColumnKey[]
 
   playlist:
-    | {
-        id: string
-        index: number
-        title: string
-        artist: string
-        islink: string
-        key: string
-        bucketName: string
-        isFull: boolean
-      }[]
-    | null
+  | {
+    id: string
+    index: number
+    title: string
+    artist: string
+    islink: string
+    key: string
+    bucketName: string
+    isFull: boolean
+  }[]
+  | null
 }
 
 const TrackItemComponent = (props: Props) => {
   const { data: session } = useSession()
   const router = useRouter()
+
+  const energy =
+    Number.isFinite(props.energy) &&
+      props.energy >= 1 &&
+      props.energy <= 10
+      ? Math.round(props.energy)
+      : null;
+
+  const activeBars =
+    energy === null ? 0 : Math.ceil(energy / 2);
+
+  const energyMood = (() => {
+    if (energy === null) {
+      return {
+        label: "Unknown",
+        barClass: "bg-zinc-500",
+        glowClass: "",
+        valueClass: "text-zinc-400",
+      };
+    }
+
+    if (energy <= 2) {
+      return {
+        label: "Ambient",
+        barClass: "bg-sky-400",
+        glowClass: "shadow-[0_0_6px_rgba(56,189,248,0.4)]",
+        valueClass: "text-sky-400",
+      };
+    }
+
+    if (energy <= 4) {
+      return {
+        label: "Chill",
+        barClass: "bg-cyan-400",
+        glowClass: "shadow-[0_0_6px_rgba(34,211,238,0.4)]",
+        valueClass: "text-cyan-400",
+      };
+    }
+
+    if (energy === 5) {
+      return {
+        label: "Underground",
+        barClass: "bg-emerald-400",
+        glowClass: "shadow-[0_0_6px_rgba(52,211,153,0.4)]",
+        valueClass: "text-emerald-400",
+      };
+    }
+
+    if (energy === 6) {
+      return {
+        label: "Groovy",
+        barClass: "bg-[#B9FF00]",
+        glowClass: "shadow-[0_0_6px_rgba(185,255,0,0.4)]",
+        valueClass: "text-[#B9FF00]",
+      };
+    }
+
+    if (energy === 7) {
+      return {
+        label: "Party",
+        barClass: "bg-yellow-400",
+        glowClass: "shadow-[0_0_6px_rgba(250,204,21,0.4)]",
+        valueClass: "text-yellow-400",
+      };
+    }
+
+    if (energy === 8) {
+      return {
+        label: "Peak Time",
+        barClass: "bg-orange-400",
+        glowClass: "shadow-[0_0_6px_rgba(251,146,60,0.4)]",
+        valueClass: "text-orange-400",
+      };
+    }
+
+    if (energy === 9) {
+      return {
+        label: "Climax",
+        barClass: "bg-red-500",
+        glowClass: "shadow-[0_0_6px_rgba(239,68,68,0.45)]",
+        valueClass: "text-red-400",
+      };
+    }
+
+    return {
+      label: "Monster",
+      barClass: "bg-fuchsia-500",
+      glowClass: "shadow-[0_0_7px_rgba(217,70,239,0.5)]",
+      valueClass: "text-fuchsia-400",
+    };
+  })();
 
   const [player, setPlayer] = useAtom(playerState)
   const [, setPlaylist] = useAtom(playlist)
@@ -190,10 +282,9 @@ const TrackItemComponent = (props: Props) => {
           w-1 bg-[#B9FF00]
           shadow-[0_0_20px_rgba(185,255,0,0.45)]
           transition-opacity duration-300
-          ${
-            isPlaying
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-70"
+          ${isPlaying
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-70"
           }
         `}
       />
@@ -220,10 +311,9 @@ const TrackItemComponent = (props: Props) => {
             flex h-10 w-10 shrink-0 items-center
             justify-center rounded-full border
             transition-all duration-200
-            ${
-              isPlaying
-                ? "border-[#B9FF00]/40 bg-[#B9FF00] text-black shadow-[0_0_20px_rgba(185,255,0,0.2)]"
-                : "border-white/10 bg-white/[0.05] text-zinc-400 hover:border-[#B9FF00]/30 hover:bg-[#B9FF00] hover:text-black"
+            ${isPlaying
+              ? "border-[#B9FF00]/40 bg-[#B9FF00] text-black shadow-[0_0_20px_rgba(185,255,0,0.2)]"
+              : "border-white/10 bg-white/[0.05] text-zinc-400 hover:border-[#B9FF00]/30 hover:bg-[#B9FF00] hover:text-black"
             }
           `}
         >
@@ -270,10 +360,9 @@ const TrackItemComponent = (props: Props) => {
                 inline-flex shrink-0 rounded-full border
                 px-2 py-0.5 text-[9px] font-bold uppercase
                 leading-none
-                ${
-                  props.is_explicit
-                    ? "border-red-500/30 bg-red-500/10 text-red-400"
-                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                ${props.is_explicit
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                 }
               `}
             >
@@ -325,11 +414,61 @@ const TrackItemComponent = (props: Props) => {
         {/* Energy */}
         {activeColumnSet.has("energy") && (
           <div className="hidden items-center justify-center md:flex">
-            <span className="text-xs text-zinc-400">
-              Energy {Number.isFinite(props.energy)
-                ? props.energy
-                : "—"}
-            </span>
+            <div
+              className="flex items-center rounded-xl px-3 py-2"
+              title={
+                energy === null
+                  ? "Energy unknown"
+                  : `Energy ${energy}/10 — ${energyMood.label}`
+              }
+            >
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-center gap-3">
+                  <h3 className={cn(`text-[10px] font-medium tracking-wide text-zinc-300 uppercase whitespace-nowrap`)}>
+                    Energy {energy === null ? "—" : `${energy}`}
+                  </h3>
+
+                  
+                </div>
+
+                <div
+                  className="flex h-4 items-end gap-1"
+                  role="meter"
+                  aria-label="Mixed In Key energy"
+                  aria-valuemin={1}
+                  aria-valuemax={10}
+                  aria-valuenow={energy ?? undefined}
+                  aria-valuetext={
+                    energy === null
+                      ? "Unknown"
+                      : `${energy}, ${energyMood.label}`
+                  }
+                >
+                  {[35, 50, 65, 80, 100].map((height, index) => {
+                    const active = index < activeBars;
+
+                    return (
+                      <span
+                        key={height}
+                        className={`w-1.5 rounded-sm transition-colors ${active
+                            ? `${energyMood.barClass} ${energyMood.glowClass}`
+                            : "bg-white/10"
+                          }`}
+                        style={{
+                          height: `${height}%`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
+                <span
+                  className={`mt-1 block truncate text-[9px] font-medium ${energyMood.valueClass}`}
+                >
+                  {energyMood.label}
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -366,7 +505,7 @@ const TrackItemComponent = (props: Props) => {
                       {genre.name}
                     </span>
                   ))}
-               
+
               </div>
             ) : (
               <span className="text-xs text-zinc-600">
@@ -400,7 +539,7 @@ const TrackItemComponent = (props: Props) => {
                       {tag.name}
                     </span>
                   ))}
-               
+
               </div>
             ) : (
               <span className="text-xs text-zinc-600">
@@ -504,10 +643,9 @@ const TrackTypeBadge = ({
       className={`
         rounded-full border px-2 py-1
         text-[9px] font-semibold uppercase tracking-wider
-        ${
-          isVideo
-            ? "border-pink-400/20 bg-pink-400/10 text-pink-300"
-            : "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-yellow-100"
+        ${isVideo
+          ? "border-pink-400/20 bg-pink-400/10 text-pink-300"
+          : "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-yellow-100"
         }
       `}
     >
