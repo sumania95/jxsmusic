@@ -27,10 +27,16 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import TrackColumnFilter, { useTrackColumns } from "../common/header-filter";
 
 const TracksComponent = () => {
   const { data: session } = useSession();
   const reduceMotion = useReducedMotion();
+  const {
+    visibleColumns,
+    toggleColumn,
+    resetColumns,
+  } = useTrackColumns()
   const itemSkeleton: number[] = Array.from(
     { length: 20 },
     (_, index) => index + 1,
@@ -148,7 +154,11 @@ const TracksComponent = () => {
                   <FilterFileTypeComponent />
                 </div>
                 <div className="flex shrink-0 rounded-xl border border-white/10 bg-[#111518]/40 p-1">{(["all", "clean", "dirty"] as const).map(value => <button key={value} onClick={() => void setExplicit(value)} className={`rounded-lg px-3 py-2 text-xs capitalize ${explicit === value ? value === "dirty" ? "bg-red-500 text-white" : value === "clean" ? "bg-emerald-500 text-black" : "bg-[#B9FF00] text-black" : "text-zinc-400"}`}>{value}</button>)}</div>
-
+                <TrackColumnFilter
+                  visibleColumns={visibleColumns}
+                  onToggle={toggleColumn}
+                  onReset={resetColumns}
+                />
                 {/* Search */}
                 <div className="hidden min-w-[220px] flex-1 lg:flex">
                   <SearchComponent
@@ -184,7 +194,9 @@ const TracksComponent = () => {
             =================================================== */}
             <section className="min-w-0 flex-1">
               {/* Track list header */}
-              <TrackListHeader />
+              <TrackListHeader 
+                visibleColumns={visibleColumns} 
+              />
 
               {/* Track rows */}
               <div className="flex w-full flex-col gap-2">
@@ -211,6 +223,7 @@ const TracksComponent = () => {
                     price={Number(trackItem.price)}
                     playlist={buildPlaylist(track.tracks)}
                     credits={credits?.credit ?? 0}
+                    visibleColumns={visibleColumns} 
                   />
                 ))}
               </div>

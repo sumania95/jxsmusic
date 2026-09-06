@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import AddCartComponent from "../tracks/helper/add-cart";
 import MoreDetailsGenreTooltip from "./more-details-genre";
 import { RiPauseLargeFill, RiPlayLargeFill } from "react-icons/ri";
@@ -12,11 +12,6 @@ import formatDuration from "format-duration";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { toast } from "sonner";
-import {
-  DEFAULT_TRACK_COLUMNS,
-  getActiveTrackColumns,
-  type TrackColumnKey,
-} from "./header-filter";
 
 type Props = {
   index_key: number;
@@ -51,7 +46,6 @@ type Props = {
   duration: number;
   releaseAt: Date;
   credits:number;
-  visibleColumns?: readonly TrackColumnKey[];
   playlist:
     | {
         id: string;
@@ -119,12 +113,6 @@ const TrackItemComponent = (props: Props) => {
 
   const isVideo = props.filetype?.includes("video");
 
-  const visibleColumnSet = useMemo(
-    () => new Set(props.visibleColumns ?? DEFAULT_TRACK_COLUMNS),
-    [props.visibleColumns],
-  );
-  const activeColumns = getActiveTrackColumns(props.visibleColumns);
-
   const duration = formatDuration(Number(props.duration * 1000)).replace(
     /^(\d):/,
     "0$1:",
@@ -153,14 +141,7 @@ const TrackItemComponent = (props: Props) => {
       {/* =====================================================
           MAIN ROW
       ===================================================== */}
-      <div
-        className="flex min-h-[76px] w-full items-center gap-3 px-3 py-3 md:grid md:items-center md:gap-4 md:px-4"
-        style={{
-          gridTemplateColumns: activeColumns
-            .map(({ width }) => width)
-            .join(" "),
-        }}
-      >
+      <div className="flex min-h-[76px] w-full items-center gap-3 px-3 py-3 md:grid md:grid-cols-[40px_40px_minmax(180px,1fr)_56px_80px_128px_64px_56px_154px] md:items-center md:gap-4 md:px-4">
         {/* =====================================================
             PLAY BUTTON
         ===================================================== */}
@@ -239,7 +220,7 @@ const TrackItemComponent = (props: Props) => {
         {/* =====================================================
             KEY
         ===================================================== */}
-        {visibleColumnSet.has("key") && <div className="hidden items-center justify-center md:flex">
+        <div className="hidden items-center justify-center md:flex">
           <span
             className="rounded-md border px-2.5 py-1 text-[11px] font-bold"
             style={{
@@ -250,21 +231,21 @@ const TrackItemComponent = (props: Props) => {
           >
             {props.in_key ?? "--"}
           </span>
-        </div>}
+        </div>
 
         {/* =====================================================
             BPM
         ===================================================== */}
-        {visibleColumnSet.has("bpm") && <div className="hidden items-center justify-center md:flex">
+        <div className="hidden items-center justify-center md:flex">
           <span className="text-xs font-semibold text-zinc-400">
             {props.bpm_start}
           </span>
-        </div>}
+        </div>
 
         {/* =====================================================
             GENRE
         ===================================================== */}
-        {visibleColumnSet.has("genre") && <div className="hidden min-w-0 flex-col items-start gap-1 lg:flex">
+        <div className="hidden min-w-0 flex-col items-start gap-1 lg:flex">
           <div className="flex items-center gap-1">
             <span className="min-w-0 truncate text-xs font-medium text-zinc-400">
               {props.genre_track[0]?.genre.name}
@@ -288,12 +269,12 @@ const TrackItemComponent = (props: Props) => {
               />
             )} */}
           </div>
-        </div>}
+        </div>
 
         {/* =====================================================
             TYPE
         ===================================================== */}
-        {visibleColumnSet.has("type") && <div className="hidden items-center md:flex">
+        <div className="hidden items-center md:flex">
           <span
             className={`rounded-full border px-2 py-1 text-[9px] font-semibold tracking-wider uppercase ${
               isVideo
@@ -303,19 +284,19 @@ const TrackItemComponent = (props: Props) => {
           >
             {isVideo ? "Video" : "Audio"}
           </span>
-        </div>}
+        </div>
 
         {/* =====================================================
             DURATION
         ===================================================== */}
-        {visibleColumnSet.has("duration") && <div className="hidden items-center justify-center md:flex">
+        <div className="hidden items-center justify-center md:flex">
           <span className="text-xs text-zinc-600">{duration}</span>
-        </div>}
+        </div>
 
         {/* =====================================================
             CART / PRICE
         ===================================================== */}
-        {visibleColumnSet.has("price") && <div className="flex shrink-0 items-center justify-end">
+        <div className="flex shrink-0 items-center justify-end">
           <AddCartComponent
             trackId={props.id}
             albumId={null}
@@ -323,7 +304,7 @@ const TrackItemComponent = (props: Props) => {
             id={props.user.id}
             credits={props.credits}
           />
-        </div>}
+        </div>
       </div>
 
       {/* =====================================================

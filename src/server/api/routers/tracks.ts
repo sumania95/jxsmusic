@@ -144,7 +144,7 @@ function convertToCamelot(inputKey?: string | null): string {
 
 
 
-const DAILY_LIMIT = 150;
+const DAILY_LIMIT = 500;
 
 function getStartOfDay(date = new Date()) {
   const d = new Date(date);

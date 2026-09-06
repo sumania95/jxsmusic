@@ -413,7 +413,7 @@ export const signedUrlRouter = createTRPCRouter({
           throw new TRPCError({
             code: "FORBIDDEN",
             message:
-              "Purchase this edit or buy the $200 / 185-credit pack to download it.",
+              "Purchase this edit or buy the $200 / 180-credit pack to download it.",
           });
         }
       }

@@ -179,7 +179,7 @@ const MediaPlayerComponent = () => {
           right-3
           z-50
           aspect-video
-          w-72
+          w-72 md:w-150
           overflow-hidden
           rounded-2xl
           border

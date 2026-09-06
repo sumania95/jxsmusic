@@ -4,7 +4,7 @@ import {
 } from "./header-filter";
 
 type TrackListHeaderProps = {
-  visibleColumns?: readonly TrackColumnKey[];
+  visibleColumns: readonly TrackColumnKey[];
 };
 
 const TrackListHeader = ({ visibleColumns }: TrackListHeaderProps) => {

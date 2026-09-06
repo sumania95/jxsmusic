@@ -7,7 +7,6 @@ const Footer = () => {
   const pages = [
     { label: "Home", href: "/" },
     { label: "How To Buy", href: "/how-to-buy" },
-    { label: "Become An Editor", href: "/become-editor" },
     { label: "DMCA Takedown Request", href: "/dmca" },
     { label: "Privacy Policy", href: "/privacy-policy" },
     { label: "Refund Policy", href: "/refund-policy" },
