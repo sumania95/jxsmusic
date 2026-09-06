@@ -36,7 +36,6 @@ type Props = {
   is_explicit: boolean
   duration: number
   releaseAt: Date
-
   genre_track: {
     genre: {
       name: string

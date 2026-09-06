@@ -996,6 +996,13 @@ export const trackRouter = createTRPCRouter({
                 }
               }
             },
+            _count:{
+              select:{
+                downloadTrack:true
+
+              }
+
+            }
           }
         });
 

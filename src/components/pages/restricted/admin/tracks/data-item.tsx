@@ -35,6 +35,9 @@ interface Props {
   is_disabled: boolean
   is_explicit: boolean
   is_exclusive: boolean
+  _count:{
+    downloadTrack:number
+  },
   genre_track: {
     genre: {
       name: string
@@ -543,9 +546,7 @@ const AdminPublishedItem = (
               text-zinc-300
             "
           >
-            {formatCurrency(
-              props.price
-            )}
+            {props._count.downloadTrack}
           </span>
 
 

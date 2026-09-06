@@ -487,9 +487,9 @@ const AdminPublishedComponent = () => {
                 Type
               </ColumnHeader>
 
-              {/* Price */}
+              {/* DL */}
               <ColumnHeader>
-                Price
+                DL
               </ColumnHeader>
 
               {/* Actions */}
