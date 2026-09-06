@@ -179,8 +179,8 @@ export default function AdminDashboardData() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-medium text-zinc-200">
-                          {order.user?.name ||
-                            order.user?.email ||
+                          {order.user?.name ??
+                            order.user?.email ??
                             "Guest customer"}
                         </p>
 
@@ -236,7 +236,7 @@ export default function AdminDashboardData() {
               message="No recent track acquisitions"
             />
           ) : (
-            <div className="max-h-[500px] divide-y divide-white/[0.06] overflow-y-auto pr-1">
+            <div className="max-h-[500px] divide-y divide-white/[0.06] overflow-y-auto pr-1 scrollbar-hide">
               {data.recentAcquisitions.map((acquisition) => {
                 const isCredit =
                   acquisition.acquisitionType === "CREDIT";
@@ -281,39 +281,11 @@ export default function AdminDashboardData() {
                       </div>
 
                       <p className="mt-1 truncate text-xs text-zinc-600">
-                        {acquisition.user.name ||
-                          acquisition.user.email ||
+                        {acquisition.user.name ??
+                          acquisition.user.email ??
                           "Unknown customer"}{" "}
                         · {formatDate(acquisition.createdAt)}
                       </p>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      {isCredit ? (
-                        <>
-                          <p className="text-sm font-semibold text-white">
-                            {acquisition.creditsSpent}{" "}
-                            {acquisition.creditsSpent === 1
-                              ? "credit"
-                              : "credits"}
-                          </p>
-
-                          <p className="mt-1 text-[10px] text-zinc-600">
-                            Credit acquisition
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm font-semibold text-white">
-                            Cart
-                          </p>
-
-                          <p className="mt-1 max-w-28 truncate text-[10px] text-zinc-600">
-                            {acquisition.order?.referenceId ??
-                              "Order unavailable"}
-                          </p>
-                        </>
-                      )}
                     </div>
                   </div>
                 );
