@@ -1,58 +1,175 @@
 import { TRPCError } from "@trpc/server";
 
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/server/api/trpc";
 
 export const accountingRouter = createTRPCRouter({
   overview: protectedProcedure.query(async ({ ctx }) => {
     const operator = await ctx.db.user.findUnique({
-      where: { id: ctx.session.user.id },
-      select: { is_admin: true, is_superadmin: true },
+      where: {
+        id: ctx.session.user.id,
+      },
+      select: {
+        is_admin: true,
+        is_superadmin: true,
+      },
     });
+
     if (!operator?.is_admin && !operator?.is_superadmin) {
-      throw new TRPCError({ code: "FORBIDDEN" });
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to view accounting.",
+      });
     }
 
-    const [paid, pending, refunded, creditSales, recentOrders] =
-      await Promise.all([
-        ctx.db.order.aggregate({
-          where: { status: "PAID", currency: "USD" },
-          _sum: { finalAmount: true, paypalFee: true },
-          _count: { id: true },
-        }),
-        ctx.db.order.aggregate({
-          where: { status: "PENDING", currency: "USD" },
-          _sum: { finalAmount: true },
-          _count: { id: true },
-        }),
-        ctx.db.order.aggregate({
-          where: { status: "REFUNDED", currency: "USD" },
-          _sum: { finalAmount: true },
-          _count: { id: true },
-        }),
-        ctx.db.order.aggregate({
-          where: { status: "PAID", purpose: "CREDIT_PACK" },
-          _sum: { finalAmount: true, creditAmount: true },
-          _count: { id: true },
-        }),
-        ctx.db.order.findMany({
-          take: 20,
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            referenceId: true,
-            status: true,
-            finalAmount: true,
-            currency: true,
-            purpose: true,
-            creditAmount: true,
-            paypalFee: true,
-            createdAt: true,
-            paidAt: true,
-            user: { select: { name: true, email: true } },
-          },
-        }),
-      ]);
+    const [
+      paid,
+      pending,
+      refunded,
+      creditSales,
+      recentOrders,
+      recentAcquisitions,
+    ] = await Promise.all([
+      ctx.db.order.aggregate({
+        where: {
+          status: "PAID",
+          currency: "USD",
+        },
+        _sum: {
+          finalAmount: true,
+          paypalFee: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
 
-    return { paid, pending, refunded, creditSales, recentOrders };
+      ctx.db.order.aggregate({
+        where: {
+          status: "PENDING",
+          currency: "USD",
+        },
+        _sum: {
+          finalAmount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+
+      ctx.db.order.aggregate({
+        where: {
+          status: "REFUNDED",
+          currency: "USD",
+        },
+        _sum: {
+          finalAmount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+
+      ctx.db.order.aggregate({
+        where: {
+          status: "PAID",
+          purpose: "CREDIT_PACK",
+          currency: "USD",
+        },
+        _sum: {
+          finalAmount: true,
+          creditAmount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+
+      ctx.db.order.findMany({
+        take: 20,
+        where:{
+          status:"PAID"
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          referenceId: true,
+          status: true,
+          finalAmount: true,
+          currency: true,
+          purpose: true,
+          creditAmount: true,
+          paypalFee: true,
+          createdAt: true,
+          paidAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      /*
+       * The newest track acquisitions.
+       *
+       * Each DownloadTrack row records whether the customer originally
+       * acquired the track through CART or CREDIT.
+       */
+      ctx.db.downloadTrack.findMany({
+        take: 20,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          acquisitionType: true,
+          creditsSpent: true,
+          createdAt: true,
+
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+
+          track: {
+            select: {
+              id: true,
+              artist: true,
+              title: true,
+              filetype: true,
+            },
+          },
+
+          order: {
+            select: {
+              id: true,
+              referenceId: true,
+              finalAmount: true,
+              currency: true,
+              status: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      paid,
+      pending,
+      refunded,
+      creditSales,
+      recentOrders,
+      recentAcquisitions,
+    };
   }),
 });

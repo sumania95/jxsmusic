@@ -57,7 +57,7 @@ const sections: Array<{
 
 export default function AccountingBackOffice() {
   const [tab, setTab] = useQueryState("tab", {
-    defaultValue: "users",
+    defaultValue: "dashboard",
   });
 
   return (
