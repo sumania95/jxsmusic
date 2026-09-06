@@ -318,17 +318,61 @@ export default async function handler(
       }
 
       case "PAYMENT.CAPTURE.REFUNDED": {
-        if (order) {
-          await db.order.update({
+        if (!order) {
+          console.warn(
+            "Refunded PayPal capture has no matching order",
+            {
+              eventId: event.id,
+              referenceId,
+            },
+          );
+
+          break;
+        }
+
+        await db.$transaction(async (tx) => {
+          /*
+          * Only the first refund delivery can change the order
+          * from a non-refunded status to REFUNDED.
+          */
+          const refundResult = await tx.order.updateMany({
             where: {
               id: order.id,
+              status: {
+                not: "REFUNDED",
+              },
             },
             data: {
               status: "REFUNDED",
               refundedAt: new Date(),
             },
           });
-        }
+
+          /*
+          * The order was already refunded, so do not deduct
+          * credits again.
+          */
+          if (refundResult.count === 0) {
+            return;
+          }
+
+          if (
+            order.purpose === "CREDIT_PACK" &&
+            order.userId &&
+            order.creditAmount > 0
+          ) {
+            await tx.user.update({
+              where: {
+                id: order.userId,
+              },
+              data: {
+                credit: {
+                  decrement: order.creditAmount,
+                },
+              },
+            });
+          }
+        });
 
         break;
       }
