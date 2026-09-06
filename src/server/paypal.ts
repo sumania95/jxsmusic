@@ -205,16 +205,15 @@ export async function createPayPalMonthlyPlan() {
   const plan = (await planResponse.json()) as PayPalBillingPlan;
   return { productId: product.id, plan };
 }
-
 type PayPalHeaders = Record<
   string,
   string | string[] | undefined
 >;
 
-const getHeader = (
+function getHeader(
   headers: PayPalHeaders,
   name: string,
-): string | undefined => {
+): string | undefined {
   const value = headers[name.toLowerCase()];
 
   if (Array.isArray(value)) {
@@ -222,11 +221,11 @@ const getHeader = (
   }
 
   return value;
-};
+}
 
 export async function verifyPayPalWebhook(
   headers: PayPalHeaders,
-  event: unknown,
+  webhookEvent: unknown,
 ): Promise<boolean> {
   const authAlgo = getHeader(
     headers,
@@ -253,28 +252,31 @@ export async function verifyPayPalWebhook(
     "paypal-transmission-time",
   );
 
-  const webhookId = env.PAYPAL_WEBHOOK_ID;
+  const webhookId =
+    env.PAYPAL_WEBHOOK_ID.trim();
 
-  const missingHeaders = {
+  const missing = {
     authAlgo: !authAlgo,
     certUrl: !certUrl,
     transmissionId: !transmissionId,
-    transmissionSignature: !transmissionSignature,
+    transmissionSignature:
+      !transmissionSignature,
     transmissionTime: !transmissionTime,
     webhookId: !webhookId,
   };
 
-  if (Object.values(missingHeaders).some(Boolean)) {
+  if (Object.values(missing).some(Boolean)) {
     console.error(
-      "Missing PayPal webhook verification data",
-      missingHeaders,
+      "Missing PayPal verification data",
+      missing,
     );
 
     return false;
   }
 
   try {
-    const token = await getPayPalAccessToken();
+    const token =
+      await getPayPalAccessToken();
 
     const response = await fetch(
       `${apiBase}/v1/notifications/verify-webhook-signature`,
@@ -288,57 +290,68 @@ export async function verifyPayPalWebhook(
           auth_algo: authAlgo,
           cert_url: certUrl,
           transmission_id: transmissionId,
-          transmission_sig: transmissionSignature,
+          transmission_sig:
+            transmissionSignature,
           transmission_time: transmissionTime,
           webhook_id: webhookId,
-          webhook_event: event,
+          webhook_event: webhookEvent,
         }),
       },
     );
 
-    const responseText = await response.text();
+    const responseText =
+      await response.text();
 
-    let data: {
+    let result: {
       verification_status?: string;
       name?: string;
       message?: string;
       debug_id?: string;
-    } = {};
+    };
 
     try {
-      data = JSON.parse(responseText) as typeof data;
+      result = JSON.parse(responseText) as {
+        verification_status?: string;
+        name?: string;
+        message?: string;
+        debug_id?: string;
+      };
     } catch {
       console.error(
-        "PayPal returned a non-JSON verification response",
+        "PayPal returned invalid JSON",
         {
-          status: response.status,
-          body: responseText.slice(0, 500),
+          httpStatus: response.status,
+          response: responseText.slice(0, 300),
         },
       );
 
       return false;
     }
 
-    console.log("PayPal webhook verification result", {
-      httpStatus: response.status,
-      verificationStatus:
-        data.verification_status,
-      errorName: data.name,
-      errorMessage: data.message,
-      debugId: data.debug_id,
-      apiBase,
-    });
-
-    if (!response.ok) {
-      return false;
-    }
+    console.log(
+      "PayPal webhook verification result",
+      {
+        httpStatus: response.status,
+        verificationStatus:
+          result.verification_status,
+        errorName: result.name,
+        errorMessage: result.message,
+        debugId: result.debug_id,
+        apiBase,
+        webhookIdLength: webhookId.length,
+        webhookIdSuffix:
+          webhookId.slice(-6),
+      },
+    );
 
     return (
-      data.verification_status === "SUCCESS"
+      response.ok &&
+      result.verification_status ===
+        "SUCCESS"
     );
   } catch (error) {
     console.error(
-      "PayPal webhook verification request failed",
+      "PayPal verification request failed",
       error,
     );
 
