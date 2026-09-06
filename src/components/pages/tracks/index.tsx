@@ -97,7 +97,14 @@ const TracksComponent = () => {
     filetypes,
     explicit,
   });
+  const page = Number(pager) || 1
+  const total = Number(track?.count._count.id) || 0
 
+  const start = total === 0
+    ? 0
+    : (page - 1) * limit + 1
+
+  const end = Math.min(page * limit, total)
   return (
     <>
       <ProfileMeta title="New Releases" description="Collection of DJ Music" />
@@ -133,47 +140,49 @@ const TracksComponent = () => {
           <section className="mb-5 rounded-2xl border border-white/10 bg-white/2.5 p-3 sm:p-4">
             <div className="flex flex-col gap-3">
               {/* Desktop / tablet filters */}
-              <div className="scrollbar-hide flex w-full gap-2 overflow-x-auto pb-1">
-                <div className="shrink-0">
-                  <DataGenreComponent />
-                </div>
+              <div className="scrollbar-hide flex lg:justify-between w-full gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 items-center">
+                  <div className="shrink-0">
+                    <DataGenreComponent />
+                  </div>
 
-                <div className="shrink-0">
-                  <DataTagComponent />
-                </div>
+                  <div className="shrink-0">
+                    <DataTagComponent />
+                  </div>
 
-                <div className="shrink-0">
-                  <DataBPMComponent />
-                </div>
+                  <div className="shrink-0">
+                    <DataBPMComponent />
+                  </div>
 
-                <div className="shrink-0">
-                  <DataKeyComponent />
-                </div>
+                  <div className="shrink-0">
+                    <DataKeyComponent />
+                  </div>
 
-                <div className="hidden shrink-0 items-center rounded-xl border border-white/10 bg-[#111518]/40 px-2 lg:flex">
-                  <FilterFileTypeComponent />
+                  <div className="shrink-0 items-center rounded-xl border border-white/10 bg-[#111518]/40 px-2 lg:flex">
+                    <FilterFileTypeComponent />
+                  </div>
+
                 </div>
-                <div className="flex shrink-0 rounded-xl border border-white/10 bg-[#111518]/40 p-1">{(["all", "clean", "dirty"] as const).map(value => <button key={value} onClick={() => void setExplicit(value)} className={`rounded-lg px-3 py-2 text-xs capitalize ${explicit === value ? value === "dirty" ? "bg-red-500 text-white" : value === "clean" ? "bg-emerald-500 text-black" : "bg-[#B9FF00] text-black" : "text-zinc-400"}`}>{value}</button>)}</div>
+                {/* <div className="flex shrink-0 rounded-xl border border-white/10 bg-[#111518]/40 p-1">{(["all", "clean", "dirty"] as const).map(value => <button key={value} onClick={() => void setExplicit(value)} className={`rounded-lg px-3 py-2 text-xs capitalize ${explicit === value ? value === "dirty" ? "bg-red-500 text-white" : value === "clean" ? "bg-emerald-500 text-black" : "bg-[#B9FF00] text-black" : "text-zinc-400"}`}>{value}</button>)}</div> */}
                 <TrackColumnFilter
                   visibleColumns={visibleColumns}
                   onToggle={toggleColumn}
                   onReset={resetColumns}
                 />
-                {/* Search */}
-                <div className="hidden min-w-[220px] flex-1 lg:flex">
-                  <SearchComponent
-                    className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-[#111518]/40 px-3 py-2 text-zinc-300 transition focus-within:border-[#B9FF00]/30 focus-within:bg-[#111518]/60"
-                    placeholder="Search title, artist..."
-                  />
-                </div>
               </div>
 
               {/* Mobile search */}
-              <div className="w-full lg:hidden">
+              <div className="w-full">
                 <SearchComponent
                   className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-[#111518]/40 px-3 py-2 text-zinc-300 transition focus-within:border-[#B9FF00]/30 focus-within:bg-[#111518]/60"
                   placeholder="Search title, artist..."
                 />
+              </div>
+              <div className="w-full">
+                <h3 className="text-xs text-zinc-400">
+                  Showing {start}–{end} of {total}{" "}
+                  {total === 1 ? "track" : "tracks"}
+                </h3>
               </div>
             </div>
           </section>
@@ -194,8 +203,8 @@ const TracksComponent = () => {
             =================================================== */}
             <section className="min-w-0 flex-1">
               {/* Track list header */}
-              <TrackListHeader 
-                visibleColumns={visibleColumns} 
+              <TrackListHeader
+                visibleColumns={visibleColumns}
               />
 
               {/* Track rows */}
@@ -223,7 +232,7 @@ const TracksComponent = () => {
                     price={Number(trackItem.price)}
                     playlist={buildPlaylist(track.tracks)}
                     credits={credits?.credit ?? 0}
-                    visibleColumns={visibleColumns} 
+                    visibleColumns={visibleColumns}
                   />
                 ))}
               </div>

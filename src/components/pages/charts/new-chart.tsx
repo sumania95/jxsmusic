@@ -21,6 +21,7 @@ import { api } from "@/utils/api"
 import TrackItemComponent from "../common/data-item"
 import TrackListHeader from "../common/track-header"
 import { useSession } from "next-auth/react"
+import { useTrackColumns } from "../common/header-filter"
 
 // Change this path to the real location of your component.
 
@@ -58,6 +59,11 @@ const isChartType = (value: string): value is ChartType => {
 }
 
 const ChartsComponent = () => {
+  const {
+            visibleColumns,
+            toggleColumn,
+            resetColumns,
+          } = useTrackColumns()
   const [chartParam, setChartParam] = useQueryState("chart", {
     defaultValue: "trending",
   })
@@ -291,7 +297,9 @@ const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boo
 
     {/* Desktop headings */}
     {tracks.length > 0 && (
-      <TrackListHeader />
+      <TrackListHeader 
+        visibleColumns={visibleColumns}
+      />
 
     )}
 
@@ -357,6 +365,7 @@ const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boo
             title={track.title}
             artist={track.artist}
             in_key={track.in_key}
+            energy={track.energy}
             filetype={track.filetype}
             preview_key={track.preview_key}
             bpm_start={track.bpm_start}
@@ -371,6 +380,7 @@ const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boo
             releaseAt={track.releaseAt}
             playlist={chartPlaylist}
             credits={credits?.credit ?? 0}
+            visibleColumns={visibleColumns}
           />
         ))}
       </div>

@@ -15,10 +15,16 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useSession } from 'next-auth/react'
 import { LockKeyhole } from 'lucide-react'
 import Link from 'next/link'
+import { useTrackColumns } from '@/components/pages/common/header-filter'
 
 const TrackDetailRelatedKeyComponent = () => {
   const router = useRouter()
   const { data: session } = useSession();
+   const {
+        visibleColumns,
+        toggleColumn,
+        resetColumns,
+      } = useTrackColumns()
   const reduceMotion = useReducedMotion();
   const trackId = Array.isArray(router.query.id)
     ? router.query.id[0]
@@ -151,7 +157,9 @@ const TrackDetailRelatedKeyComponent = () => {
         )}
       </div>
       {/* Track list header */}
-      <TrackListHeader />
+      <TrackListHeader 
+        visibleColumns={visibleColumns}
+      />
 
       {/* =====================================================
           TRACK LIST
@@ -199,6 +207,7 @@ const TrackDetailRelatedKeyComponent = () => {
                 price={Number(trackItem.price)}
                 playlist={buildPlaylist(track.tracks)}
                 credits={credits?.credit ?? 0}
+                visibleColumns={visibleColumns}
               />
             ))}
         </div>

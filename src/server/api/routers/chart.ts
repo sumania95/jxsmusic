@@ -89,6 +89,7 @@ export const chartRouter = createTRPCRouter({
   title: true,
   artist: true,
   in_key: true,
+  energy: true,
   filetype: true,
   preview_key: true,
   bpm_start: true,

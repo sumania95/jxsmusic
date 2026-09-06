@@ -39,49 +39,56 @@ const FilterActiveResetComponents = () => {
     ).withDefault([])
   )
 
+  // Clean and Dirty filter
+  const [explicit, setExplicit] = useQueryState(
+    "explicit",
+    parseAsStringEnum(["all", "clean", "dirty"])
+      .withDefault("all")
+      .withOptions({
+        clearOnDefault: true,
+      })
+  )
+
   const toggleFiletype = (type: string) => {
     void setFiletypes((prev) => {
       const exists = prev.includes(type)
+
       return exists
-        ? prev.filter((t) => t !== type)
+        ? prev.filter((item) => item !== type)
         : [...prev, type]
     })
   }
 
   const toggleGenre = (slug: string) => {
-    void setGenres((prev) => {
-      const exists = prev.includes(slug)
-      const next = exists
-        ? prev.filter((g) => g !== slug)
+    void setGenres((prev) =>
+      prev.includes(slug)
+        ? prev.filter((genre) => genre !== slug)
         : [...prev, slug]
-
-      return next
-    })
+    )
   }
 
   const toggleTag = (slug: string) => {
-    void setTags((prev) => {
-      const exists = prev.includes(slug)
-      const next = exists
-        ? prev.filter((g) => g !== slug)
+    void setTags((prev) =>
+      prev.includes(slug)
+        ? prev.filter((tag) => tag !== slug)
         : [...prev, slug]
-
-      return next
-    })
+    )
   }
 
   const toggleKey = (keyName: string) => {
-    void setSelectedKeys((prev) => {
-      const newKeys = prev.includes(keyName)
-        ? prev.filter((k) => k !== keyName)
+    void setSelectedKeys((prev) =>
+      prev.includes(keyName)
+        ? prev.filter((key) => key !== keyName)
         : [...prev, keyName]
-
-      return newKeys
-    })
+    )
   }
 
   const resetBpm = () => {
     void setBpm([0, 200])
+  }
+
+  const resetExplicit = () => {
+    void setExplicit("all")
   }
 
   const toggleResetAll = () => {
@@ -90,359 +97,128 @@ const FilterActiveResetComponents = () => {
     void setTags([])
     void setSelectedKeys([])
     void setFiletypes([])
+    void setExplicit("all")
   }
+
+  const hasActiveFilters =
+    Number(bpm[0]) > 0 ||
+    Number(bpm[1]) < 200 ||
+    genres.length > 0 ||
+    tags.length > 0 ||
+    selectedKeys.length > 0 ||
+    filetypes.length > 0 ||
+    explicit !== "all"
 
   return (
     <>
-      {Boolean(
-        Number(bpm[0]) > 0 ||
-          Number(bpm[1]) < 200 ||
-          genres.length > 0 ||
-          tags.length > 0 ||
-          selectedKeys.length > 0 ||
-          filetypes.length > 0
-      ) && (
+      {hasActiveFilters && (
         <div
           className="
-            flex
-            w-full
-            flex-col
-            gap-3
-            rounded-xl
-            border
-            border-white/10
-            bg-white/[0.02]
-            p-3
-            sm:flex-row
-            sm:items-center
-            sm:justify-between
+            flex w-full flex-col gap-3 rounded-xl border
+            border-white/10 bg-white/[0.02] p-3
+            sm:flex-row sm:items-center sm:justify-between
           "
         >
-          {/* =====================================================
-              ACTIVE FILTERS
-          ===================================================== */}
-          <div
-            className="
-              flex
-              min-w-0
-              flex-1
-              flex-wrap
-              items-center
-              gap-2
-            "
-          >
-            {/* FILTER LABEL */}
-            <div
-              className="
-                mr-1
-                flex
-                items-center
-                gap-2
-              "
-            >
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <div className="mr-1 flex items-center gap-2">
               <span
                 className="
-                  h-1.5
-                  w-1.5
-                  rounded-full
-                  bg-[#B9FF00]
+                  h-1.5 w-1.5 rounded-full bg-[#B9FF00]
                   shadow-[0_0_8px_rgba(185,255,0,0.6)]
                 "
               />
 
               <span
                 className="
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.15em]
-                  text-zinc-600
+                  text-[9px] font-medium uppercase
+                  tracking-[0.15em] text-zinc-600
                 "
               >
                 Active Filters
               </span>
             </div>
 
-            {/* =================================================
-                FILETYPE
-            ================================================= */}
+            {/* FILETYPE */}
             {filetypes.map((type) => (
-              <button
+              <FilterButton
                 key={type}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggleFiletype(type)
-                }}
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  border
-                  border-[#B9FF00]/15
-                  bg-[#B9FF00]/[0.05]
-                  px-3
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-[#B9FF00]
-                  transition-all
-                  duration-200
-                  hover:border-red-400/25
-                  hover:bg-red-400/[0.06]
-                  hover:text-red-300
-                "
-              >
-                <IoMdCloseCircleOutline
-                  className="
-                    h-3.5
-                    w-3.5
-                    shrink-0
-                    text-[#B9FF00]/60
-                    transition-colors
-                    group-hover:text-red-400
-                  "
-                />
-
-                {type === "audio"
-                  ? "Audio Only"
-                  : "Video Only"}
-              </button>
+                label={type === "audio" ? "Audio" : "Video"}
+                onRemove={() => toggleFiletype(type)}
+              />
             ))}
 
-            {/* =================================================
-                GENRE
-            ================================================= */}
-            {genres.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  border
-                  border-[#B9FF00]/15
-                  bg-[#B9FF00]/[0.05]
-                  px-3
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-[#B9FF00]
-                  transition-all
-                  duration-200
-                  hover:border-red-400/25
-                  hover:bg-red-400/[0.06]
-                  hover:text-red-300
-                "
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggleGenre(String(item))
-                }}
-              >
-                <IoMdCloseCircleOutline
-                  className="
-                    h-3.5
-                    w-3.5
-                    shrink-0
-                    text-[#B9FF00]/60
-                    transition-colors
-                    group-hover:text-red-400
-                  "
-                />
+            {/* CLEAN OR DIRTY */}
+            {explicit !== "all" && (
+              <FilterButton
+                label={explicit === "clean" ? "Clean" : "Dirty"}
+                onRemove={resetExplicit}
+                variant={
+                  explicit === "dirty"
+                    ? "danger"
+                    : "success"
+                }
+              />
+            )}
 
-                {Unslug(item)}
-              </button>
+            {/* GENRES */}
+            {genres.map((genre) => (
+              <FilterButton
+                key={genre}
+                label={Unslug(genre)}
+                onRemove={() => toggleGenre(genre)}
+              />
             ))}
 
-            {/* =================================================
-                TAG
-            ================================================= */}
-            {tags.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  border
-                  border-[#B9FF00]/15
-                  bg-[#B9FF00]/[0.05]
-                  px-3
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-[#B9FF00]
-                  transition-all
-                  duration-200
-                  hover:border-red-400/25
-                  hover:bg-red-400/[0.06]
-                  hover:text-red-300
-                "
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggleTag(String(item))
-                }}
-              >
-                <IoMdCloseCircleOutline
-                  className="
-                    h-3.5
-                    w-3.5
-                    shrink-0
-                    text-[#B9FF00]/60
-                    transition-colors
-                    group-hover:text-red-400
-                  "
-                />
-
-                {Unslug(item)}
-              </button>
+            {/* TAGS */}
+            {tags.map((tag) => (
+              <FilterButton
+                key={tag}
+                label={Unslug(tag)}
+                onRemove={() => toggleTag(tag)}
+              />
             ))}
 
-            {/* =================================================
-                KEY
-            ================================================= */}
-            {selectedKeys.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  border
-                  border-[#B9FF00]/15
-                  bg-[#B9FF00]/[0.05]
-                  px-3
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-[#B9FF00]
-                  transition-all
-                  duration-200
-                  hover:border-red-400/25
-                  hover:bg-red-400/[0.06]
-                  hover:text-red-300
-                "
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggleKey(String(item))
-                }}
-              >
-                <IoMdCloseCircleOutline
-                  className="
-                    h-3.5
-                    w-3.5
-                    shrink-0
-                    text-[#B9FF00]/60
-                    transition-colors
-                    group-hover:text-red-400
-                  "
-                />
-
-                {Unslug(item)}
-              </button>
+            {/* KEYS */}
+            {selectedKeys.map((keyName) => (
+              <FilterButton
+                key={keyName}
+                label={Unslug(keyName)}
+                onRemove={() => toggleKey(keyName)}
+              />
             ))}
 
-            {/* =================================================
-                BPM
-            ================================================= */}
+            {/* BPM */}
             {(Number(bpm[0]) > 0 ||
               Number(bpm[1]) < 200) && (
-              <button
-                type="button"
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  rounded-full
-                  border
-                  border-[#B9FF00]/15
-                  bg-[#B9FF00]/[0.05]
-                  px-3
-                  py-1.5
-                  text-[10px]
-                  font-medium
-                  text-[#B9FF00]
-                  transition-all
-                  duration-200
-                  hover:border-red-400/25
-                  hover:bg-red-400/[0.06]
-                  hover:text-red-300
-                "
-                onClick={resetBpm}
-              >
-                <IoMdCloseCircleOutline
-                  className="
-                    h-3.5
-                    w-3.5
-                    shrink-0
-                    text-[#B9FF00]/60
-                    transition-colors
-                    group-hover:text-red-400
-                  "
-                />
-
-                {`${bpm[0]}-${bpm[1]} BPM`}
-              </button>
+              <FilterButton
+                label={`${bpm[0]}-${bpm[1]} BPM`}
+                onRemove={resetBpm}
+              />
             )}
           </div>
 
-          {/* =====================================================
-              RESET ALL
-          ===================================================== */}
           <div className="shrink-0">
             <button
               type="button"
-              className="
-                group
-                flex
-                w-full
-                items-center
-                justify-center
-                gap-1.5
-                rounded-lg
-                border
-                border-white/10
-                bg-white/[0.03]
-                px-3
-                py-2
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-wider
-                text-zinc-500
-                transition-all
-                duration-200
-                hover:border-red-400/20
-                hover:bg-red-400/[0.06]
-                hover:text-red-400
-                sm:w-auto
-              "
-              onClick={(e) => {
-                e.preventDefault()
+              onClick={(event) => {
+                event.preventDefault()
                 toggleResetAll()
               }}
+              className="
+                group flex w-full items-center justify-center gap-1.5
+                rounded-lg border border-white/10 bg-white/[0.03]
+                px-3 py-2 text-[10px] font-medium uppercase
+                tracking-wider text-zinc-500 transition-all duration-200
+                hover:border-red-400/20 hover:bg-red-400/[0.06]
+                hover:text-red-400 sm:w-auto
+              "
             >
               Reset All
 
               <IoMdRefresh
                 className="
-                  h-3.5
-                  w-3.5
-                  transition-transform
-                  duration-300
-                  group-hover:rotate-180
+                  h-3.5 w-3.5 transition-transform
+                  duration-300 group-hover:rotate-180
                 "
               />
             </button>
@@ -450,6 +226,54 @@ const FilterActiveResetComponents = () => {
         </div>
       )}
     </>
+  )
+}
+
+type FilterButtonProps = {
+  label: string
+  onRemove: () => void
+  variant?: "default" | "success" | "danger"
+}
+
+const FilterButton = ({
+  label,
+  onRemove,
+  variant = "default",
+}: FilterButtonProps) => {
+  const colors = {
+    default:
+      "border-[#B9FF00]/15 bg-[#B9FF00]/[0.05] text-[#B9FF00]",
+    success:
+      "border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-400",
+    danger:
+      "border-red-400/20 bg-red-400/[0.06] text-red-400",
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault()
+        onRemove()
+      }}
+      className={`
+        group inline-flex items-center gap-1.5 rounded-full border
+        px-3 py-1.5 text-[10px] font-medium
+        transition-all duration-200
+        hover:border-red-400/25 hover:bg-red-400/[0.06]
+        hover:text-red-300
+        ${colors[variant]}
+      `}
+    >
+      <IoMdCloseCircleOutline
+        className="
+          h-3.5 w-3.5 shrink-0 opacity-60
+          transition-colors group-hover:text-red-400
+        "
+      />
+
+      {label}
+    </button>
   )
 }
 
@@ -466,6 +290,8 @@ const Unslug = (slug: string) => {
     SPECIAL_SLUGS[decoded] ??
     decoded
       .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace(/\b\w/g, (character) =>
+        character.toUpperCase()
+      )
   )
 }

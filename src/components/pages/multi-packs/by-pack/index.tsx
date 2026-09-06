@@ -29,6 +29,7 @@ import TrackListHeader from '../../common/track-header'
 import { motion, useReducedMotion } from "framer-motion";
 import { useSession } from 'next-auth/react'
 import { LockKeyhole } from 'lucide-react'
+import { useTrackColumns } from '../../common/header-filter'
 
 interface Props {
   name: string | null;
@@ -49,6 +50,11 @@ const MultiPackDetailComponent = (props: Props) => {
   const [defaultLimit] =
     useAtom(defaultPageLimit)
   const { data: session } = useSession();
+   const {
+          visibleColumns,
+          toggleColumn,
+          resetColumns,
+        } = useTrackColumns()
   const reduceMotion = useReducedMotion();
   const itemSkeleton: number[] =
     Array.from(
@@ -753,7 +759,9 @@ const MultiPackDetailComponent = (props: Props) => {
             )
           }
           {/* Track list header */}
-          <TrackListHeader />
+          <TrackListHeader 
+            visibleColumns={visibleColumns}
+          />
 
           {album?.count._count.id === 0 && (
             <div
@@ -826,6 +834,7 @@ const MultiPackDetailComponent = (props: Props) => {
                     )
                   }
                   credits={credits?.credit ?? 0}
+                  visibleColumns={visibleColumns}
                 />
               </div>
             )

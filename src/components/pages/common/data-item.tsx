@@ -1,187 +1,232 @@
-import React, { useMemo } from "react";
-import AddCartComponent from "../tracks/helper/add-cart";
-import MoreDetailsGenreTooltip from "./more-details-genre";
-import { RiPauseLargeFill, RiPlayLargeFill } from "react-icons/ri";
-import { useAtom } from "jotai";
-import { playerState, playlist } from "@/state/globalState";
-import { api } from "@/utils/api";
-import ImageThumbnailComponent from "@/components/common/image-thumbnail";
-import Link from "next/link";
-import { formatCurrency, formatTrackTitle } from "@/lib/utils";
-import formatDuration from "format-duration";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import { toast } from "sonner";
+"use client"
+
+import ImageThumbnailComponent from "@/components/common/image-thumbnail"
+import { formatCurrency } from "@/lib/utils"
+import { playerState, playlist } from "@/state/globalState"
+import { api } from "@/utils/api"
+import formatDuration from "format-duration"
+import { useAtom } from "jotai"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+import { useRouter } from "next/router"
+import { RiPauseLargeFill, RiPlayLargeFill } from "react-icons/ri"
+import { toast } from "sonner"
+
+import AddCartComponent from "../tracks/helper/add-cart"
+import MoreDetailsGenreTooltip from "./more-details-genre"
 import {
-  DEFAULT_TRACK_COLUMNS,
   getActiveTrackColumns,
   type TrackColumnKey,
-} from "./header-filter";
+} from "./header-filter"
 
 type Props = {
-  index_key: number;
-  id: string;
-  title: string | null;
-  artist: string | null;
-  in_key: string | null;
-  filetype: string | null;
-  preview_key: string | null;
-  bpm_start: number;
-  bpm_end: number;
-  price: number;
-  is_explicit: boolean;
-  release_year: number;
+  index_key: number
+  id: string
+  title: string | null
+  artist: string | null
+  in_key: string | null
+  filetype: string | null
+  preview_key: string | null
+  bpm_start: number
+  bpm_end: number
+  energy: number
+  release_year: number
+  price: number
+  credits: number
+  is_explicit: boolean
+  duration: number
+  releaseAt: Date
 
   genre_track: {
     genre: {
-      name: string;
-    };
-  }[];
+      name: string
+    }
+  }[]
+
   tag_track: {
     tag: {
-      name: string;
-    };
-  }[];
-  user: {
-    id: string | null;
-    username: string | null;
-    image: string | null;
-  };
+      name: string
+    }
+  }[]
 
-  duration: number;
-  releaseAt: Date;
-  credits:number;
-  visibleColumns?: readonly TrackColumnKey[];
+  user: {
+    id: string | null
+    username: string | null
+    image: string | null
+  }
+
+  visibleColumns?: readonly TrackColumnKey[]
+
   playlist:
     | {
-        id: string;
-        index: number;
-        title: string;
-        artist: string;
-        islink: string;
-        key: string;
-        bucketName: string;
-        isFull: boolean;
+        id: string
+        index: number
+        title: string
+        artist: string
+        islink: string
+        key: string
+        bucketName: string
+        isFull: boolean
       }[]
-    | null;
-};
+    | null
+}
 
 const TrackItemComponent = (props: Props) => {
-  const { data: session } = useSession();
-  const router = useRouter();
-  const [state, setState] = useAtom(playerState);
+  const { data: session } = useSession()
+  const router = useRouter()
+
+  const [player, setPlayer] = useAtom(playerState)
+  const [, setPlaylist] = useAtom(playlist)
 
   const { mutateAsync: signSource } =
-    api.signedUrl.signUrlKeyBucket.useMutation();
+    api.signedUrl.signUrlKeyBucket.useMutation()
 
-  const [, setData] = useAtom(playlist);
+  const activeColumns = getActiveTrackColumns(
+    props.visibleColumns
+  )
+
+  const activeColumnSet = new Set(
+    activeColumns.map(({ key }) => key)
+  )
+
+  const isPlaying =
+    player.playing && player.id === String(props.id)
+
+  const isVideo =
+    props.filetype?.toLowerCase().includes("video") ??
+    false
+
+  const formattedDuration = formatDuration(
+    Number(props.duration) * 1000
+  ).replace(/^(\d):/, "0$1:")
+
+  const currentKey =
+    keyData.find(
+      ({ name }) =>
+        name.toUpperCase() ===
+        (props.in_key ?? "--").trim().toUpperCase()
+    ) ?? keyData[0]
 
   const playButton = async () => {
     if (!session?.user) {
-      toast.info("Sign in to preview Jeff92 & Ayan Sumania edits.", {
-        action: {
-          label: "Sign in",
-          onClick: () => void router.push("/auth/login"),
-        },
-      });
-      return;
-    }
-    if (state.id === String(props.id)) {
-      setState({
-        ...state,
-        playing: true,
-      });
-    } else {
-      setState({
-        ...state,
-        next: true,
-      });
+      toast.info(
+        "Sign in to preview Jeff92 & Ayan Sumania edits.",
+        {
+          action: {
+            label: "Sign in",
+            onClick: () =>
+              void router.push("/auth/login"),
+          },
+        }
+      )
 
+      return
+    }
+
+    if (player.id === String(props.id)) {
+      setPlayer((current) => ({
+        ...current,
+        playing: true,
+      }))
+
+      return
+    }
+
+    setPlayer((current) => ({
+      ...current,
+      next: true,
+    }))
+
+    try {
       const source = await signSource({
         id: String(props.id),
         key: String(props.preview_key),
         bucketName: "jxs-music",
-      });
+      })
 
-      setState({
-        ...state,
+      setPlayer((current) => ({
+        ...current,
         id: String(props.id),
         source: String(source.url),
         playing: true,
         next: false,
-      });
+      }))
 
-      setData(props.playlist!);
+      setPlaylist(props.playlist ?? [])
+    } catch {
+      setPlayer((current) => ({
+        ...current,
+        next: false,
+      }))
+
+      toast.error("Unable to load this preview.")
     }
-  };
+  }
 
-  const isPlaying = state.playing && state.id === String(props.id);
+  const togglePlayback = () => {
+    if (isPlaying) {
+      setPlayer((current) => ({
+        ...current,
+        playing: false,
+      }))
 
-  const isVideo = props.filetype?.includes("video");
+      return
+    }
 
-  const visibleColumnSet = useMemo(
-    () => new Set(props.visibleColumns ?? DEFAULT_TRACK_COLUMNS),
-    [props.visibleColumns],
-  );
-  const activeColumns = getActiveTrackColumns(props.visibleColumns);
-
-  const duration = formatDuration(Number(props.duration * 1000)).replace(
-    /^(\d):/,
-    "0$1:",
-  );
-  const currentKey = keyData.find(
-    ({ name }) =>
-      name.toUpperCase() === (props.in_key ?? "--").trim().toUpperCase(),
-  ) ?? {
-    id: 100,
-    name: "--",
-    color: "#000000",
-    textColor: "#FFFFFF",
-  };
+    void playButton()
+  }
 
   return (
-    <div className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] transition-all duration-300 hover:border-white/15 hover:bg-white/[0.045]">
-      {/* =====================================================
-          SUBTLE ACTIVE / HOVER GLOW
-      ===================================================== */}
+    <div
+      className="
+        group relative w-full overflow-hidden rounded-2xl
+        border border-white/10 bg-white/[0.025]
+        transition-all duration-300
+        hover:border-white/15 hover:bg-white/[0.045]
+      "
+    >
       <div
-        className={`pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#B9FF00] shadow-[0_0_20px_rgba(185,255,0,0.45)] transition-opacity duration-300 ${
-          isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-70"
-        } `}
+        className={`
+          pointer-events-none absolute inset-y-0 left-0
+          w-1 bg-[#B9FF00]
+          shadow-[0_0_20px_rgba(185,255,0,0.45)]
+          transition-opacity duration-300
+          ${
+            isPlaying
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-70"
+          }
+        `}
       />
 
-      {/* =====================================================
-          MAIN ROW
-      ===================================================== */}
       <div
-        className="flex min-h-[76px] w-full items-center gap-3 px-3 py-3 md:grid md:items-center md:gap-4 md:px-4"
+        className="
+          flex min-h-[76px] w-full items-center gap-3
+          px-3 py-3 md:grid md:items-center md:gap-4 md:px-4
+        "
         style={{
           gridTemplateColumns: activeColumns
             .map(({ width }) => width)
             .join(" "),
         }}
       >
-        {/* =====================================================
-            PLAY BUTTON
-        ===================================================== */}
+        {/* Play */}
         <button
           type="button"
-          aria-label={isPlaying ? "Pause track" : "Play preview"}
-          onClick={() => {
-            if (isPlaying) {
-              setState({
-                ...state,
-                playing: false,
-              });
-            } else {
-              void playButton();
+          aria-label={
+            isPlaying ? "Pause track" : "Play preview"
+          }
+          onClick={togglePlayback}
+          className={`
+            flex h-10 w-10 shrink-0 items-center
+            justify-center rounded-full border
+            transition-all duration-200
+            ${
+              isPlaying
+                ? "border-[#B9FF00]/40 bg-[#B9FF00] text-black shadow-[0_0_20px_rgba(185,255,0,0.2)]"
+                : "border-white/10 bg-white/[0.05] text-zinc-400 hover:border-[#B9FF00]/30 hover:bg-[#B9FF00] hover:text-black"
             }
-          }}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${
-            isPlaying
-              ? `border-[#B9FF00]/40 bg-[#B9FF00] text-black shadow-[0_0_20px_rgba(185,255,0,0.2)]`
-              : `border-white/10 bg-white/[0.05] text-zinc-400 hover:border-[#B9FF00]/30 hover:bg-[#B9FF00] hover:text-black`
-          } `}
+          `}
         >
           {isPlaying ? (
             <RiPauseLargeFill className="h-5 w-5" />
@@ -190,177 +235,310 @@ const TrackItemComponent = (props: Props) => {
           )}
         </button>
 
-        {/* =====================================================
-            EDITOR AVATAR
-        ===================================================== */}
-        <div className="hidden h-10 w-10 shrink-0 overflow-hidden border border-white/10 bg-white/[0.04] sm:block">
+        {/* Avatar */}
+        <div
+          className="
+            hidden h-10 w-10 shrink-0 overflow-hidden
+            border border-white/10 bg-white/[0.04] md:block
+          "
+        >
           <ImageThumbnailComponent
-            image={String(props.user.image)}
+            image={String(props.user.image ?? "")}
             rounded={false}
           />
         </div>
 
-        {/* =====================================================
-            TRACK INFO
-        ===================================================== */}
+        {/* Track */}
         <div className="min-w-0 flex-1 md:flex-none">
-          <div className="flex min-w-0 items-center gap-2"><Link href={`/tracks/${props.id}`} className="min-w-0 max-w-full">
-            <h3 className="truncate text-sm font-semibold leading-5 text-zinc-100 transition-colors hover:text-[#B9FF00]">
-              {props.title}
-            </h3>
-          </Link><span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase leading-none ${props.is_explicit ? "border-red-500/30 bg-red-500/10 text-red-400" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"}`}>{props.is_explicit ? "Dirty" : "Clean"}</span></div>
+          <div className="flex min-w-0 items-center gap-2">
+            <Link
+              href={`/tracks/${props.id}`}
+              className="min-w-0 max-w-full"
+            >
+              <h3
+                className="
+                  truncate text-sm font-semibold leading-5
+                  text-zinc-100 transition-colors
+                  hover:text-[#B9FF00]
+                "
+              >
+                {props.title ?? "Untitled"}
+              </h3>
+            </Link>
+
+            <span
+              className={`
+                inline-flex shrink-0 rounded-full border
+                px-2 py-0.5 text-[9px] font-bold uppercase
+                leading-none
+                ${
+                  props.is_explicit
+                    ? "border-red-500/30 bg-red-500/10 text-red-400"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                }
+              `}
+            >
+              {props.is_explicit ? "Dirty" : "Clean"}
+            </span>
+          </div>
 
           <p className="mt-0.5 truncate text-sm text-zinc-400">
-            {props.artist}
+            {props.artist ?? "Unknown artist"}
           </p>
-          <Link
-            href={`/editors/${props.user.id}`}
-            className="mt-0.5 truncate text-xs text-[#B9FF00]/70 hover:text-yellow-400"
-          >
-            {props.user.username}
-          </Link>
 
-          {/* MOBILE METADATA */}
           <div className="mt-2 flex items-center gap-1.5 md:hidden">
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold tracking-wider uppercase ${
-                isVideo
-                  ? `border-pink-400/20 bg-pink-400/10 text-pink-300`
-                  : `border-[#B9FF00]/20 bg-[#B9FF00]/10 text-[#B9FF00]`
-              } `}
-            >
-              {isVideo ? "Video" : "Audio"}
-            </span>
+            <TrackTypeBadge isVideo={isVideo} />
 
-            <span className="text-[10px] text-zinc-600">{duration}</span>
+            <span className="text-[10px] text-zinc-600">
+              {formattedDuration}
+            </span>
           </div>
         </div>
 
-        {/* =====================================================
-            KEY
-        ===================================================== */}
-        {visibleColumnSet.has("key") && <div className="hidden items-center justify-center md:flex">
-          <span
-            className="rounded-md border px-2.5 py-1 text-[11px] font-bold"
-            style={{
-              backgroundColor: currentKey.color,
-              borderColor: currentKey.color,
-              color: currentKey.textColor,
-            }}
-          >
-            {props.in_key ?? "--"}
-          </span>
-        </div>}
-
-        {/* =====================================================
-            BPM
-        ===================================================== */}
-        {visibleColumnSet.has("bpm") && <div className="hidden items-center justify-center md:flex">
-          <span className="text-xs font-semibold text-zinc-400">
-            {props.bpm_start}
-          </span>
-        </div>}
-
-        {/* =====================================================
-            GENRE
-        ===================================================== */}
-        {visibleColumnSet.has("genre") && <div className="hidden min-w-0 flex-col items-start gap-1 lg:flex">
-          <div className="flex items-center gap-1">
-            <span className="min-w-0 truncate text-xs font-medium text-zinc-400">
-              {props.genre_track[0]?.genre.name}
+        {/* Key */}
+        {activeColumnSet.has("key") && (
+          <div className="hidden items-center justify-center md:flex">
+            <span
+              className="
+                rounded-md border px-2.5 py-1
+                text-[11px] font-bold
+              "
+              style={{
+                backgroundColor: currentKey.color,
+                borderColor: currentKey.color,
+                color: currentKey.textColor,
+              }}
+            >
+              {props.in_key ?? "--"}
             </span>
-            {Number(props.genre_track?.length) > 1 && (
-              <MoreDetailsGenreTooltip genre_track={props.genre_track} />
+          </div>
+        )}
+
+        {/* BPM */}
+        {activeColumnSet.has("bpm") && (
+          <div className="hidden items-center justify-center md:flex">
+            <span className="text-xs font-semibold text-zinc-400">
+              {props.bpm_start || "—"}
+            </span>
+          </div>
+        )}
+
+        {/* Energy */}
+        {activeColumnSet.has("energy") && (
+          <div className="hidden items-center justify-center md:flex">
+            <span className="text-xs text-zinc-400">
+              Energy {Number.isFinite(props.energy)
+                ? props.energy
+                : "—"}
+            </span>
+          </div>
+        )}
+
+        {/* Release year */}
+        {activeColumnSet.has("release_year") && (
+          <div className="hidden items-center justify-center md:flex">
+            <span className="text-xs font-semibold text-zinc-400">
+              {props.release_year || "—"}
+            </span>
+          </div>
+        )}
+
+        {/* Genre */}
+        {activeColumnSet.has("genre") && (
+          <div className="hidden min-w-0 items-center md:flex">
+            {props.genre_track.length > 0 ? (
+              <div
+                className="
+                  flex flex-wrap min-w-0 items-center gap-1
+                "
+              >
+                {props.genre_track
+                  .map(({ genre }, index) => (
+                    <span
+                      key={`${genre.name}-${index}`}
+                      title={genre.name}
+                      className="
+                        rounded-full
+                        border border-purple-400/15
+                        bg-purple-400/[0.06] px-2 py-0.5
+                        text-[9px] font-medium text-purple-400
+                      "
+                    >
+                      {genre.name}
+                    </span>
+                  ))}
+               
+              </div>
+            ) : (
+              <span className="text-xs text-zinc-600">
+                —
+              </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-1">
-            {props.tag_track.map((tag, idx) => (
-              <span
-                key={idx}
-                className="min-w-0 truncate text-[9px] font-medium text-cyan-500"
+        )}
+
+        {/* Tags — separate from Genre */}
+        {activeColumnSet.has("tags") && (
+          <div className="hidden min-w-0 items-center md:flex">
+            {props.tag_track.length > 0 ? (
+              <div
+                className="
+                  flex flex-wrap min-w-0 items-center gap-1
+                "
               >
-                {tag.tag.name}
+                {props.tag_track
+                  .map(({ tag }, index) => (
+                    <span
+                      key={`${tag.name}-${index}`}
+                      title={tag.name}
+                      className="
+                        rounded-full
+                        border border-cyan-400/15
+                        bg-cyan-400/[0.06] px-2 py-0.5
+                        text-[9px] font-medium text-cyan-400
+                      "
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+               
+              </div>
+            ) : (
+              <span className="text-xs text-zinc-600">
+                —
               </span>
-            ))}
-            {/* {Number(props.tag_track?.length) > 1 && (
-              <MoreDetailsGenreTooltip
-                genre_track={props.tag_track}
-              />
-            )} */}
+            )}
           </div>
-        </div>}
+        )}
 
-        {/* =====================================================
-            TYPE
-        ===================================================== */}
-        {visibleColumnSet.has("type") && <div className="hidden items-center md:flex">
-          <span
-            className={`rounded-full border px-2 py-1 text-[9px] font-semibold tracking-wider uppercase ${
-              isVideo
-                ? `border-pink-400/20 bg-pink-400/10 text-pink-300`
-                : `border-[#B9FF00]/20 bg-[#B9FF00]/10 text-yellow-100`
-            } `}
-          >
-            {isVideo ? "Video" : "Audio"}
-          </span>
-        </div>}
+        {/* Type */}
+        {activeColumnSet.has("type") && (
+          <div className="hidden items-center md:flex">
+            <TrackTypeBadge isVideo={isVideo} />
+          </div>
+        )}
 
-        {/* =====================================================
-            DURATION
-        ===================================================== */}
-        {visibleColumnSet.has("duration") && <div className="hidden items-center justify-center md:flex">
-          <span className="text-xs text-zinc-600">{duration}</span>
-        </div>}
+        {/* Duration */}
+        {activeColumnSet.has("duration") && (
+          <div className="hidden items-center justify-center md:flex">
+            <span className="text-xs text-zinc-600">
+              {formattedDuration}
+            </span>
+          </div>
+        )}
 
-        {/* =====================================================
-            CART / PRICE
-        ===================================================== */}
-        {visibleColumnSet.has("price") && <div className="flex shrink-0 items-center justify-end">
-          <AddCartComponent
-            trackId={props.id}
-            albumId={null}
-            price={props.price}
-            id={props.user.id}
-            credits={props.credits}
-          />
-        </div>}
+        {/* Price */}
+        {activeColumnSet.has("price") && (
+          <div className="flex shrink-0 items-center justify-end">
+            <AddCartComponent
+              trackId={props.id}
+              albumId={null}
+              price={props.price}
+              id={props.user.id}
+              credits={props.credits}
+            />
+          </div>
+        )}
       </div>
 
-      {/* =====================================================
-          MOBILE BOTTOM METADATA
-      ===================================================== */}
-      <div className="flex items-center gap-3 border-t border-white/5 px-4 py-2 md:hidden">
+      {/* Mobile metadata */}
+      <div
+        className="
+          flex flex-wrap items-center gap-2 border-t
+          border-white/5 px-4 py-2 md:hidden
+        "
+      >
+        <MetadataItem>
+          <span style={{ color: currentKey.color }}>
+            {props.in_key ?? "--"}
+          </span>
+        </MetadataItem>
+
+        <MetadataDivider />
+
+        <MetadataItem>
+          {props.bpm_start || "—"} BPM
+        </MetadataItem>
+
+        <MetadataDivider />
+
+        <MetadataItem>
+          Energy {Number.isFinite(props.energy) ? props.energy : "—"}
+        </MetadataItem>
+
+        <MetadataDivider />
+
+        <MetadataItem>
+          {props.release_year || "—"}
+        </MetadataItem>
+
+        <MetadataDivider />
+
+        <MetadataItem>
+          {props.genre_track[0]?.genre.name ?? "No genre"}
+        </MetadataItem>
+
+        <MetadataDivider />
+
         <span
-          className="text-[9px] font-semibold tracking-wider uppercase"
-          style={{
-            color: currentKey.color,
-          }}
+          className="
+            truncate text-xs uppercase tracking-wider
+            text-yellow-600
+          "
         >
-          {props.in_key ?? "--"}
-        </span>
-
-        <span className="h-1 w-1 rounded-full bg-zinc-700" />
-
-        <span className="text-[9px] tracking-wider text-zinc-400 uppercase">
-          {props.bpm_start} BPM
-        </span>
-
-        <span className="h-1 w-1 rounded-full bg-zinc-700" />
-
-        <span className="truncate text-[9px] tracking-wider text-zinc-400 uppercase">
-          {props.genre_track[0]?.genre.name}
-        </span>
-        <span className="h-1 w-1 rounded-full bg-zinc-700" />
-
-        <span className="truncate text-xs tracking-wider text-yellow-600 uppercase">
-          {props.price === 0 ? "FREE" : formatCurrency(props.price)}
+          {props.price === 0
+            ? "Free"
+            : formatCurrency(props.price)}
         </span>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TrackItemComponent;
+const TrackTypeBadge = ({
+  isVideo,
+}: {
+  isVideo: boolean
+}) => {
+  return (
+    <span
+      className={`
+        rounded-full border px-2 py-1
+        text-[9px] font-semibold uppercase tracking-wider
+        ${
+          isVideo
+            ? "border-pink-400/20 bg-pink-400/10 text-pink-300"
+            : "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-yellow-100"
+        }
+      `}
+    >
+      {isVideo ? "Video" : "Audio"}
+    </span>
+  )
+}
+
+const MetadataItem = ({
+  children,
+}: {
+  children: React.ReactNode
+}) => {
+  return (
+    <span
+      className="
+        truncate text-[9px] uppercase
+        tracking-wider text-zinc-400
+      "
+    >
+      {children}
+    </span>
+  )
+}
+
+const MetadataDivider = () => (
+  <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-700" />
+)
+
+export default TrackItemComponent
 
 const keyData = [
   {
@@ -513,4 +691,4 @@ const keyData = [
     color: "#20EAE6",
     textColor: "#000000",
   },
-];
+] as const

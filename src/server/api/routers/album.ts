@@ -365,6 +365,7 @@ export const albumRouter = createTRPCRouter({
             duration:true,
             releaseAt:true,
             in_key:true,
+            energy:true,
             price:true,
             bpm_start:true,
             bpm_end:true,
@@ -429,7 +430,7 @@ export const albumRouter = createTRPCRouter({
         name:{
           contains:String(input.search)
         },
-        userId:ctx.session.user.id
+        // userId:ctx.session.user.id
       }
       const count = await ctx.db.album.aggregate({
         where:filter,
