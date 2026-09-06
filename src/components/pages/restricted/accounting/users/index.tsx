@@ -25,9 +25,6 @@ import {
 
 
 const AdminUserData = () => {
-    const customers = api.credits.customers.useQuery();
-    const [amounts, setAmounts] = React.useState<Record<string, number>>({});
-    const adjust = api.credits.adjust.useMutation({ onSuccess: () => void customers.refetch() });
     const itemSkeleton: number[] = Array.from({ length: 25 }, (_, index) => index + 1);
 
     const filterParser = parseAsStringEnum([
@@ -156,9 +153,6 @@ const AdminUserData = () => {
                 </div>
             </div>
         </section>
-
-        <section className="w-full rounded-2xl border border-white/10 bg-white/[.02] p-5"><h3 className="text-sm font-semibold text-white">Customer credit balances</h3><p className="mt-1 text-xs text-zinc-600">Add or subtract non-expiring download credits.</p><div className="mt-4 grid gap-2 lg:grid-cols-2">{customers.data?.map(customer => <div key={customer.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-xl border border-white/[.06] bg-[#111518]/50 p-3"><span className="min-w-0 truncate text-xs text-zinc-300">{customer.name ?? customer.email} · <b className="text-[#B9FF00]">{customer.credit}</b></span><input type="number" value={amounts[customer.id] ?? 0} onChange={event => setAmounts(current => ({ ...current, [customer.id]: Number(event.target.value) }))} className="w-20 rounded-lg border border-white/10 bg-[#111518] px-2 py-2 text-xs"/><button onClick={() => adjust.mutate({ userId: customer.id, delta: amounts[customer.id] ?? 0 })} className="rounded-lg bg-[#B9FF00] px-3 py-2 text-xs font-bold text-black">Adjust</button></div>)}</div></section>
-
         {/* =====================================================
             FILTERS
         ===================================================== */}

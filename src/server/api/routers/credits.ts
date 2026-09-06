@@ -51,18 +51,18 @@ export const creditsRouter = createTRPCRouter({
     return { orderId: paypal.id };
   }),
 
-  customers: accountingProcedure.query(async ({ ctx }) => {
-    return ctx.db.user.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, email: true, credit: true } });
-  }),
+  // customers: accountingProcedure.query(async ({ ctx }) => {
+  //   return ctx.db.user.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, email: true, credit: true } });
+  // }),
 
-  adjust: accountingProcedure
-    .input(z.object({ userId: z.string(), delta: z.number().int().min(-100000).max(100000) }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.$transaction(async (db) => {
-        const user = await db.user.findUniqueOrThrow({ where: { id: input.userId }, select: { credit: true } });
-        const credit = user.credit + input.delta;
-        if (credit < 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Credit balance cannot be negative" });
-        return db.user.update({ where: { id: input.userId }, data: { credit }, select: { id: true, credit: true } });
-      });
-    }),
+  // adjust: accountingProcedure
+  //   .input(z.object({ userId: z.string(), delta: z.number().int().min(-100000).max(100000) }))
+  //   .mutation(async ({ ctx, input }) => {
+  //     return ctx.db.$transaction(async (db) => {
+  //       const user = await db.user.findUniqueOrThrow({ where: { id: input.userId }, select: { credit: true } });
+  //       const credit = user.credit + input.delta;
+  //       if (credit < 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Credit balance cannot be negative" });
+  //       return db.user.update({ where: { id: input.userId }, data: { credit }, select: { id: true, credit: true } });
+  //     });
+  //   }),
 });

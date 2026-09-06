@@ -4,6 +4,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/server/api/trpc";
+import z from "zod";
 
 export const accountingRouter = createTRPCRouter({
   overview: protectedProcedure.query(async ({ ctx }) => {
@@ -171,5 +172,73 @@ export const accountingRouter = createTRPCRouter({
       recentOrders,
       recentAcquisitions,
     };
+  }),
+  getAll: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().nullish(),
+        take: z.number().max(100),
+        skip: z.number(),
+      })
+    ).query(async ({ ctx, input })=>{
+      const searchTerms = (input.search ?? "").trim().split(/\s+/).filter(Boolean);
+
+      const filter = {
+        ...(searchTerms.length ? { 
+          AND: searchTerms.map((term) => ({ 
+            track:{
+              keywords: { contains: term } 
+            }
+          })) } : {}),
+      }
+      const count = await ctx.db.downloadTrack.count({
+        where:filter
+      })
+      const tracks =  await ctx.db.downloadTrack.findMany({
+        take:input.take,
+        skip:input.skip,
+        where:filter,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          acquisitionType: true,
+          creditsSpent: true,
+          createdAt: true,
+
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+
+          track: {
+            select: {
+              id: true,
+              artist: true,
+              title: true,
+              filetype: true,
+              is_explicit:true,
+            },
+          },
+
+          order: {
+            select: {
+              id: true,
+              referenceId: true,
+              finalAmount: true,
+              currency: true,
+              status: true,
+            },
+          },
+        },
+    })
+    return {
+      count,
+      tracks
+    }
   }),
 });

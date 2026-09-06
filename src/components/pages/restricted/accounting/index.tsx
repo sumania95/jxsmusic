@@ -21,7 +21,7 @@ import AdminDashboardData from "./dashboard";
 import AdminUserData from "./users";
 import AdminCouponData from "./coupon";
 import AdminOrdersData from "./orders";
-import AdminAccounting from "./accounting";
+import AccountingAcquisition from "./acquisition";
 
 const sections: Array<{
   value: string;
@@ -49,8 +49,8 @@ const sections: Array<{
     icon: ShoppingCart,
   },
   {
-    value: "reports",
-    label: "Reports",
+    value: "acquisition",
+    label: "Acquisition",
     icon: BarChart3,
   },
 ];
@@ -108,8 +108,8 @@ export default function AccountingBackOffice() {
             <AdminOrdersData />
           </TabsContent>
 
-          <TabsContent value="reports">
-            <AdminAccounting />
+          <TabsContent value="acquisition">
+            <AccountingAcquisition />
           </TabsContent>
         </Tabs>
       </section>

@@ -206,6 +206,8 @@ export const userRouter = createTRPCRouter({
             image: true,
             username: true,
             is_uploader: true,
+            is_disabled:true,
+            credit:true,
             createdAt: true,
 
             _count: {
@@ -238,7 +240,9 @@ export const userRouter = createTRPCRouter({
             name: u.name,
             image: u.image,
             username: u.username,
+            credit:u.credit,
             is_uploader: u.is_uploader,
+            is_disabled: u.is_disabled,
             createdAt: u.createdAt,
             totalTracks: u._count.track,
             publishedTracks: published,
@@ -247,8 +251,8 @@ export const userRouter = createTRPCRouter({
         })
 
         return {
-        users: formattedUsers,
-        total,
+            users: formattedUsers,
+            total,
         }
     }),
 
@@ -365,6 +369,204 @@ export const userRouter = createTRPCRouter({
             },
         })
         
+    }),
+
+    setCredit: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().cuid(),
+        credit: z.number().int().min(0).max(1_000_000),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const operator = await ctx.db.user.findUnique({
+        where: {
+          id: ctx.session.user.id,
+        },
+        select: {
+          is_admin: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!operator?.is_admin && !operator?.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Administrator access required.",
+        });
+      }
+
+      const target = await ctx.db.user.findUnique({
+        where: {
+          id: input.userId,
+        },
+        select: {
+          id: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!target) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found.",
+        });
+      }
+
+      if (target.is_superadmin && !operator.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only a superadmin can modify a superadmin.",
+        });
+      }
+
+      return ctx.db.user.update({
+        where: {
+          id: input.userId,
+        },
+        data: {
+          credit: input.credit,
+        },
+        select: {
+          id: true,
+          credit: true,
+        },
+      });
+    }),
+
+  addCredit: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().cuid(),
+        amount: z.number().int().min(1).max(1_000_000),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const operator = await ctx.db.user.findUnique({
+        where: {
+          id: ctx.session.user.id,
+        },
+        select: {
+          is_admin: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!operator?.is_admin && !operator?.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Administrator access required.",
+        });
+      }
+
+      const target = await ctx.db.user.findUnique({
+        where: {
+          id: input.userId,
+        },
+        select: {
+          id: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!target) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found.",
+        });
+      }
+
+      if (target.is_superadmin && !operator.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only a superadmin can modify a superadmin.",
+        });
+      }
+
+      return ctx.db.user.update({
+        where: {
+          id: input.userId,
+        },
+        data: {
+          credit: {
+            increment: input.amount,
+          },
+        },
+        select: {
+          id: true,
+          credit: true,
+        },
+      });
+    }),
+
+  setDisabled: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().cuid(),
+        disabled: z.boolean(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot disable your own account.",
+        });
+      }
+
+      const operator = await ctx.db.user.findUnique({
+        where: {
+          id: ctx.session.user.id,
+        },
+        select: {
+          is_admin: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!operator?.is_admin && !operator?.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Administrator access required.",
+        });
+      }
+
+      const target = await ctx.db.user.findUnique({
+        where: {
+          id: input.userId,
+        },
+        select: {
+          id: true,
+          is_superadmin: true,
+        },
+      });
+
+      if (!target) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found.",
+        });
+      }
+
+      if (target.is_superadmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "A superadmin cannot be disabled.",
+        });
+      }
+
+      return ctx.db.user.update({
+        where: {
+          id: input.userId,
+        },
+        data: {
+          is_disabled: input.disabled,
+        },
+        select: {
+          id: true,
+          is_disabled: true,
+        },
+      });
     }),
     
 });
