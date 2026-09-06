@@ -78,7 +78,7 @@ const PublishedComponent = () => {
       bpm_end: bpm[1],
       skip: Number(Number(pager) * limit - limit),
       take: limit,
-      is_editor: true,
+      is_editor: false,
     });
 
   return (

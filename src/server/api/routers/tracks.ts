@@ -845,9 +845,10 @@ export const trackRouter = createTRPCRouter({
           take:input.take,
           skip:input.skip,
           orderBy: [
+            { filename: "asc" },
+            { is_explicit: "asc" },
             { releaseAt: "desc" },
             { title: "asc" },
-            { is_explicit: "asc" },
           ],
           where: filter,
           select:{

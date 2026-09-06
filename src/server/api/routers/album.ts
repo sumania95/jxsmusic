@@ -200,9 +200,9 @@ export const albumRouter = createTRPCRouter({
         contains: input.search ?? undefined,
       },
 
-      user: {
-        id: ctx.session.user.id,
-      },
+      // user: {
+      //   id: ctx.session.user.id,
+      // },
 
       // 👇 ONLY hide when explicitly enabled
       ...(input.hideAlbumTracks
