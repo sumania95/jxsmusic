@@ -407,7 +407,7 @@ const MyCartComponent = () => {
                             toast.info(
                               "Checkout cancelled. You can pay the pending order from My Orders.",
                             );
-                            void router.push("/my-orders?status=PENDING");
+                            void router.push("/my-orders?status=ALL");
                           }}
                           onError={(error) => {
                             if (

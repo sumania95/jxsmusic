@@ -22,7 +22,7 @@ export default function StepsGrid() {
     {
       id: 3,
       title: "Buy or use credits",
-      description: "185 non-expiring credits for $200",
+      description: "180 non-expiring credits for $200",
       icon: <CreditCardIcon className="h-5 w-5" />,
     },
     {

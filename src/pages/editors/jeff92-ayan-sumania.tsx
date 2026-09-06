@@ -17,7 +17,7 @@ export default function JointEditorProfile() {
       <div className="mt-12 flex flex-wrap gap-3">
         <Link href="/tracks?search=Jeff92%20Ayan%20Sumania" className="inline-flex items-center gap-2 rounded-xl bg-[#B9FF00] px-6 py-3 text-sm font-semibold text-black">Browse all edits <ArrowRight className="h-4 w-4" /></Link>
         <Link href="/multi-packs" className="rounded-xl border border-white/10 px-6 py-3 text-sm font-medium hover:border-[#B9FF00]/30">View packs</Link>
-        <Link href="/credits" className="rounded-xl border border-white/10 px-6 py-3 text-sm font-medium hover:border-[#B9FF00]/30">185 credits · $200</Link>
+        <Link href="/credits" className="rounded-xl border border-white/10 px-6 py-3 text-sm font-medium hover:border-[#B9FF00]/30">180 credits · $200</Link>
       </div>
 
       <section className="mt-20 border-t border-white/10 pt-14">

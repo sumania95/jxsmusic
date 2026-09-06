@@ -231,7 +231,7 @@ const ProfileComponent = () => {
           <MenuRow
             icon={CreditCard}
             label={`${creditBalance?.credit ?? 0} credits left`}
-            description="Buy 185 non-expiring credits for $200"
+            description="Buy 180 non-expiring credits for $200"
             active={
               router.pathname === "/account" ||
               router.pathname === "/credits"
