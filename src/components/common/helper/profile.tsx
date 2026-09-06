@@ -13,6 +13,7 @@ import {
   CreditCard,
   Star,
   Landmark,
+  MessageCircleCode,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -286,6 +287,15 @@ const ProfileComponent = () => {
                 description="Users, roles, and system access"
                 active={router.pathname.startsWith("/restricted/admin")}
                 onSelect={() => navigate("/restricted/admin")}
+              />
+            )}
+            {isSuperAdmin && (
+              <MenuRow
+                icon={MessageCircleCode}
+                label="Marketing"
+                description="Manage Emails Ads"
+                active={router.pathname.startsWith("/restricted/marketing")}
+                onSelect={() => navigate("/restricted/marketing")}
               />
             )}
           </div>
