@@ -9,12 +9,14 @@ import {
 import AdminCouponDelete from "./helper/action-delete";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import AdminCouponUpdate from "./helper/update-form";
 
 interface Props {
   id: string;
   name: string | null;
   code: string;
   year: number;
+  minSpend:number;
   type: string;
   value: number;
   isActive: boolean;
@@ -28,6 +30,7 @@ const AdminCouponItem = ({
   code,
   type,
   value,
+  minSpend,
   year,
   isActive,
   startsAt,
@@ -336,6 +339,19 @@ const AdminCouponItem = ({
           ACTION
       ===================================================== */}
       <div className="flex justify-end">
+        {!isExpired &&
+        <AdminCouponUpdate
+          id={id}
+          name={name}
+          code={code}
+          value={value}
+          minSpend={minSpend}
+          year={year}
+          isActive={isActive}
+          startsAt={startsAt}
+          expiresAt={expiresAt}
+        />
+        }
         <AdminCouponDelete id={id} />
       </div>
     </div>
