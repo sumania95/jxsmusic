@@ -21,13 +21,13 @@ export const dmcaRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-        const resend = new Resend(env.NEXT_RESEND_API);
+        const resend = new Resend(env.RESEND_API);
         await ctx.db.dmcaRequest.create({
             data: input,
         });
         // 2️⃣ Send email notification to developer
         await resend.emails.send({
-            from: "Jeff92 & Ayan Sumania <no-reply@jeff92ayansumania.com>",
+            from: "Jeff92 & Ayan Sumania <no-reply@jxsmusic.com>",
             to: "support@cn-dl.com",
             subject: `New DMCA Request from ${input.name}`,
             html: `

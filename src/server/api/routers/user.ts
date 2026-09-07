@@ -308,69 +308,6 @@ export const userRouter = createTRPCRouter({
         }
     }),
 
-
-    userRenew: protectedProcedure
-    .input(z.object({ 
-        id: z.string(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-        const { id} = input
-        //    
-        const customer = await ctx.db.user.findUnique({
-            where:{
-                id
-            }
-        })
-        let newDate:Date;
-        if (new Date(String(customer?.expireAt))<=new Date()){
-            newDate = addMonths(new Date(), 1);
-        }else{
-            newDate = addMonths(String(customer?.expireAt), 1);
-        }
-
-        const resend = new Resend(env.NEXT_RESEND_API);
-        await resend.emails.send({
-            from: 'SMASH BANGERZ <no-reply@smashbangerz.com>',
-            to: String(customer?.email),
-            subject: `Great News! Your Account Is Active for Another Month`,
-            html: `<!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset=utf-8>
-                <meta http-equiv=x-ua-compatible content="ie=edge">
-                <title>Great News! Your Account Is Active for Another Month</title>
-                <meta name=viewport content="width=device-width,initial-scale=1">
-                <style>@media screen{@font-face{font-family:'Source Sans Pro';font-style:normal;font-weight:400;src:local('Source Sans Pro Regular'),local('SourceSansPro-Regular'),url(https://fonts.gstatic.com/s/sourcesanspro/v10/ODelI1aHBYDBqgeIAH2zlBM0YzuT7MdOe03otPbuUS0.woff) format('woff')}@font-face{font-family:'Source Sans Pro';font-style:normal;font-weight:700;src:local('Source Sans Pro Bold'),local('SourceSansPro-Bold'),url(https://fonts.gstatic.com/s/sourcesanspro/v10/toadOcfmlt9b38dHJxOBGFkQc6VGVFSmCnC_l7QZG60.woff) format('woff')}}a,body,table,td{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}table,td{mso-table-rspace:0pt;mso-table-lspace:0pt}img{-ms-interpolation-mode:bicubic}a[x-apple-data-detectors]{font-family:inherit!important;font-size:inherit!important;font-weight:inherit!important;line-height:inherit!important;color:inherit!important;text-decoration:none!important}div[style*="margin: 16px 0;"]{margin:0!important}body{width:100%!important;height:100%!important;padding:0!important;margin:0!important}table{border-collapse:collapse!important}a{color:#1a82e2}img{height:auto;line-height:100%;text-decoration:none;border:0;outline:0}</style>
-            </head>
-            <body style="background-color:#e9ecef; height: auto;width=600px;">
-                <div style="padding-left: 20px;padding-bottom: 20px;">
-                    <div style="display:flex; justify-items: center; align-items: center; width=600px; ">
-                        <h3 style="font-size: 20px;">Hi ${String(customer?.name)},</h3>
-                    </div>
-                    <div style="display:flex; justify-items: center; align-items: center; width=600px; ">
-                        <p style="font-size: 15px;">Thank you for subscribing! Your 1-month subscription has been successfully added. We hope you enjoy the benefits.</p>
-                    </div>
-                    <div style="display:flex; justify-items: center; align-items: center; width=600px; ">
-                        <p style="font-size: 15px;">If you have any questions, feel free to reach out.</p>
-                    </div>
-                    <div style="display:flex; justify-items: center; align-items: center; width=600px; ">
-                        <p style="font-size: 15px;">SMASH BANGERZ.</p>
-                    </div>
-                </div>
-            </body>
-            </html>`
-        });
-        return await ctx.db.user.update({
-            where: {
-                id,
-            },
-            data: {
-                expireAt: newDate,
-            },
-        })
-        
-    }),
-
     setCredit: protectedProcedure
     .input(
       z.object({

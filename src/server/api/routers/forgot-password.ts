@@ -23,7 +23,7 @@ export const forgotPasswordRouter = createTRPCRouter({
           message: "Please check your email",
         }
       }
-      const resend = new Resend(env.NEXT_RESEND_API);
+      const resend = new Resend(env.RESEND_API);
       const token = jwt.sign({ email: email }, String(env.AUTH_SECRET),{expiresIn: 60 * 60});
       const website = env.NEXT_PUBLIC_APP_URL
       console.log(`http://localhost:3000/auth/forgot-password/${token}`)

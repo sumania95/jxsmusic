@@ -331,8 +331,8 @@ export const editorRouter = createTRPCRouter({
       // 2️⃣ Prepare email variables
       const dashboardUrl = `${env.NEXT_PUBLIC_APP_URL}/restricted/editor/uploader`;
       const platformName = "JEFF92 & AYAN SUMANIA";
-      const supportEmail = "no-reply@jeff92ayansumania.com";
-      const resend = new Resend(env.NEXT_RESEND_API);
+      const supportEmail = "no-reply@jxsmusic.com";
+      const resend = new Resend(env.RESEND_API);
       const emailHtml = `
         <p>Hi ${user.name},</p>
         <p>Congratulations! 🎉<br/>

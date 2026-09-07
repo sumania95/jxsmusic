@@ -55,10 +55,10 @@ export default async function handler(
   }
 
   const webhookSecret =
-    process.env.NEXT_RESEND_WEBHOOK_SECRET;
+    process.env.RESEND_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error("NEXT_RESEND_WEBHOOK_SECRET is missing");
+    console.error("RESEND_WEBHOOK_SECRET is missing");
 
     return response.status(500).json({
       error: "Webhook secret is missing",

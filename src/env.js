@@ -16,8 +16,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    NEXT_RESEND_API: z.string(),
-    NEXT_RESEND_WEBHOOK_SECRET:z.string(),
+    RESEND_API: z.string(),
+    RESEND_WEBHOOK_SECRET:z.string(),
     S3_ENDPOINT: z.string(),
     S3_ACCESS_ID: z.string(),
     S3_SECRET_KEY: z.string(),
@@ -54,8 +54,8 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_RESEND_API: process.env.NEXT_RESEND_API,
-    NEXT_RESEND_WEBHOOK_SECRET: process.env.NEXT_RESEND_WEBHOOK_SECRET,
+    RESEND_API: process.env.RESEND_API,
+    RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
     S3_ENDPOINT: process.env.S3_ENDPOINT,
     S3_ACCESS_ID: process.env.S3_ACCESS_ID,
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
