@@ -12,7 +12,7 @@ import { Prisma } from "generated/prisma";
 import { WeeklyUploadEmail } from "@/components/email/weekly-template";
 import { formatTrackTitle } from "@/lib/utils";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API);
 
 const USERS_PER_RUN = 20;
 
