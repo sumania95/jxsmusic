@@ -32,6 +32,7 @@ export const accountingRouter = createTRPCRouter({
       creditSales,
       recentOrders,
       recentAcquisitions,
+      activeUserCredits,
     ] = await Promise.all([
       ctx.db.order.aggregate({
         where: {
@@ -162,6 +163,21 @@ export const accountingRouter = createTRPCRouter({
           },
         },
       }),
+      // active user credits
+      ctx.db.user.aggregate({
+        where: {
+          is_uploader:false,
+          credit:{
+            gt:0
+          }
+        },
+        _sum: {
+          credit: true,
+        },
+        _count: {
+          id: true,
+        },
+      }),
     ]);
 
     return {
@@ -171,6 +187,7 @@ export const accountingRouter = createTRPCRouter({
       creditSales,
       recentOrders,
       recentAcquisitions,
+      activeUserCredits
     };
   }),
   getAll: protectedProcedure

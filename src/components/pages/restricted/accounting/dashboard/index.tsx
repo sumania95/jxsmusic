@@ -102,6 +102,13 @@ export default function AdminDashboardData() {
         `${data.creditSales._sum.creditAmount ?? 0} credits`,
       icon: CreditCard,
     },
+    {
+      label: "Active Credit Users",
+      value: data.activeUserCredits._count.id,
+      meta:
+        `${data.activeUserCredits._sum.credit ?? 0} Remaining Credits`,
+      icon: CreditCard,
+    },
   ];
 
   return (
