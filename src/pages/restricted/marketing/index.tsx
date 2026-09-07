@@ -19,7 +19,7 @@ export const getServerSideProps = requireAdmin(async () => {
       {
         id: "track-1",
         title: "Midnight Drive (Jeff92 & Ayan Sumania Remix) Clean",
-        artistName: "Alex",
+        artistName: "Jeff92 x Ayan Sumania",
         trackUrl: "https://example.com/tracks/track-1",
         uploadedAt: new Date(),
         bpm: 124,
@@ -28,7 +28,7 @@ export const getServerSideProps = requireAdmin(async () => {
       {
         id: "track-2",
         title: "Summer Lights (Jeff92 & Ayan Sumania Remix) Dirty",
-        artistName: "Alex",
+        artistName: "Jeff92 x Ayan Sumania",
         trackUrl: "https://example.com/tracks/track-2",
         uploadedAt: new Date(),
         bpm: 128,
@@ -37,7 +37,7 @@ export const getServerSideProps = requireAdmin(async () => {
       {
         id: "track-3",
         title: "After Hours (Jeff92 & Ayan Sumania Remix) Clean",
-        artistName: "Alex",
+        artistName: "Jeff92 x Ayan Sumania",
         trackUrl: "https://example.com/tracks/track-3",
         uploadedAt: new Date(),
         bpm: 118,

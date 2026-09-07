@@ -6,6 +6,7 @@ import {
     Heading,
     Html,
     Link,
+    Img,
     Preview,
     Section,
     Tailwind,
@@ -53,9 +54,14 @@ export function WeeklyUploadEmail({
                     <Container className="mx-auto max-w-[620px] overflow-hidden rounded-2xl border border-[#23262f] bg-[#101217]">
                         {/* HEADER */}
                         <Section className="px-8 pb-7 pt-9 text-center">
-                            <Text className="m-0 text-[25px] font-black tracking-[3px] text-white">
-                                JxSmusic
-                            </Text>
+                            <Img
+                                src={"https://jxsmusic-eta.vercel.app/images/jeff92-ayan-brand-mark.png"}
+                                width="100"
+                                height="70"
+                                alt="JxSmusic"
+                                className="mx-auto block"
+                            />
+
 
                             <Text className="mb-0 mt-2 text-[10px] font-bold tracking-[3px] text-[#777f90]">
                                 JEFF92 × AYAN SUMANIA
