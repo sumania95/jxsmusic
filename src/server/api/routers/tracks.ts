@@ -1188,6 +1188,7 @@ export const trackRouter = createTRPCRouter({
             is_explicit:true,
             is_exclusive:true,
             preview_count:true,
+            preview_key:true,
             duration:true,
             releaseAt:true,
             in_key:true,

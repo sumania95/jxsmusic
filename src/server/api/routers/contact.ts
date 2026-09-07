@@ -19,7 +19,7 @@ export const contactRouter = createTRPCRouter({
       const resend = new Resend(env.RESEND_API);
       try {
         await resend.emails.send({
-          from: "Jeff92 & Ayan Sumania <no-reply@jxsmusic.com>", // your verified email
+          from: "JXS Music <no-reply@jxsmusic.com>", // your verified email
           to: "support@cn-dl.com", // developer email to receive contact form
           subject: `Contact Us Form Submission : ${subject}`,
           html: `

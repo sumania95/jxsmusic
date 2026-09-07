@@ -62,7 +62,7 @@ const TrackDetailInfoComponent = () => {
 
     const source = await signSource({
       id: String(trackId),
-      key: `${String(trackId)}.mp3`,
+      key: String(track?.preview_key),
       bucketName: 'jxs-music',
     })
 
