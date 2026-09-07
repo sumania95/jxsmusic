@@ -381,13 +381,16 @@ const MyCartComponent = () => {
                           captureOrder={async (orderId) => {
                             await captureCheckout.mutateAsync({ orderId });
                           }}
-                          onSuccess={() =>
+                          onSuccess={() =>{
+                            void utils.cart.getAll.invalidate()
                             void router.push("/my-orders?payment=success")
+                          }
                           }
                           onCancel={() => {
                             toast.info(
                               "Checkout cancelled. You can pay the pending order from My Orders.",
                             );
+                            void utils.cart.getAll.invalidate()
                             void router.push("/my-orders?status=ALL");
                           }}
                           onError={(error) => {
