@@ -8,11 +8,14 @@ import type {
 export function authorizeCron(
   request: NextApiRequest,
   response: NextApiResponse,
-) {
+): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  const authorization =
+    request.headers.authorization;
+
   if (
-    !process.env.NEXT_CRON_SECRET ||
-    request.headers.authorization !==
-      `Bearer ${process.env.NEXT_CRON_SECRET}`
+    !cronSecret ||
+    authorization !== `Bearer ${cronSecret}`
   ) {
     response.status(401).json({
       error: "Unauthorized",
