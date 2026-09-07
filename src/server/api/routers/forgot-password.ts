@@ -28,7 +28,7 @@ export const forgotPasswordRouter = createTRPCRouter({
       const website = env.NEXT_PUBLIC_APP_URL
       console.log(`http://localhost:3000/auth/forgot-password/${token}`)
       await resend.emails.send({
-        from: 'JEFF92 & AYAN SUMANIA <no-reply@jeff92ayansumania.com>',
+        from: 'JXS Music <no-reply@jxsmusic.com>',
         to: user.email!,
         subject: 'Reset Password',
         html: `<!DOCTYPE html>
