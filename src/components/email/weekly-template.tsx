@@ -223,15 +223,15 @@ export function WeeklyUploadEmail({
                             </Text>
 
                             <Text className="m-0 text-[11px] text-[#656d7c]">
-                                You received this email because you subscribed to JxSmusic.
+                                You received this email because you have a JxSmusic account.
                             </Text>
 
                             <Text className="mb-0 mt-3 text-[11px]">
                                 <Link
-                                    href={preferencesUrl}
-                                    className="text-[#8c94a3] underline"
+                                    href={'https://www.jxsmusic.com/'}
+                                    className="text-[#B9FF00]"
                                 >
-                                    Unsubscribe
+                                    jxsmusic.com
                                 </Link>
                             </Text>
                         </Section>
