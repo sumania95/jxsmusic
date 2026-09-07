@@ -16,28 +16,34 @@ export const getServerSideProps = requireAdmin(async () => {
       customerName="Alex"
       trackCount={14}
       latestTracks={[
-        {
-          id: "track-1",
-          title: "Midnight Drive",
-          artistName: "Alex",
-          trackUrl: "https://example.com/tracks/track-1",
-          uploadedAt: new Date(),
-        },
-        {
-          id: "track-2",
-          title: "Summer Lights",
-          artistName: "Alex",
-          trackUrl: "https://example.com/tracks/track-2",
-          uploadedAt: new Date(),
-        },
-        {
-          id: "track-3",
-          title: "After Hours",
-          artistName: "Alex",
-          trackUrl: "https://example.com/tracks/track-3",
-          uploadedAt: new Date(),
-        },
-      ]}
+      {
+        id: "track-1",
+        title: "Midnight Drive (Jeff92 & Ayan Sumania Remix) Clean",
+        artistName: "Alex",
+        trackUrl: "https://example.com/tracks/track-1",
+        uploadedAt: new Date(),
+        bpm: 124,
+        mediaType: "AUDIO",
+      },
+      {
+        id: "track-2",
+        title: "Summer Lights (Jeff92 & Ayan Sumania Remix) Dirty",
+        artistName: "Alex",
+        trackUrl: "https://example.com/tracks/track-2",
+        uploadedAt: new Date(),
+        bpm: 128,
+        mediaType: "VIDEO",
+      },
+      {
+        id: "track-3",
+        title: "After Hours (Jeff92 & Ayan Sumania Remix) Clean",
+        artistName: "Alex",
+        trackUrl: "https://example.com/tracks/track-3",
+        uploadedAt: new Date(),
+        bpm: 118,
+        mediaType: "AUDIO",
+      },
+    ]}
       dashboardUrl="https://example.com/tracks"
       preferencesUrl="https://example.com/settings/notifications"
     />,
