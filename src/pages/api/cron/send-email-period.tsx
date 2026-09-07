@@ -35,7 +35,7 @@ export default async function handler(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const emailFrom = "info@jxsmusic.com";
+  const emailFrom = "store@jxsmusic.com";
 
   if (!appUrl || !emailFrom) {
     return response.status(500).json({
@@ -187,7 +187,7 @@ export default async function handler(
 
     const { data, error } = await resend.batch.send(
       reserved.map(({ user }) => ({
-        from: emailFrom,
+        from: `JXS Music <${emailFrom}>`,
         to: String(user.email),
         subject: `${trackCount} fresh drops are live on JxSmusic`,
         react: (
