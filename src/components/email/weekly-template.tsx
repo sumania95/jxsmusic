@@ -225,7 +225,7 @@ export function WeeklyUploadEmail({
                                     href={preferencesUrl}
                                     className="text-[#8c94a3] underline"
                                 >
-                                    Manage email preferences
+                                    Unsubscribe
                                 </Link>
                             </Text>
                         </Section>
