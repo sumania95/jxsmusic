@@ -94,6 +94,13 @@ async function loadAndProcessArtwork(
   return null;
 }
 
+const localArtwork = path.join(
+  process.cwd(),
+  "public",
+  "images",
+  "track-logo.png",
+);
+
 function convertToCamelot(inputKey?: string | null): string {
   if (!inputKey) return "";
 
@@ -625,7 +632,7 @@ export const trackRouter = createTRPCRouter({
             console.log("track",`${input.artist} - ${input.title}`,Math.floor((Number(loaded) * 100) / Number(total)))
           },
         });
-      const artwork = await loadAndProcessArtwork(["https://jxsmusic.com/images/track-logo.png","https://jxsmusic.vercel.app/images/track-logo.png","http://localhost:3000/images/track-logo.png"]);
+      const artwork = await loadAndProcessArtwork(["https://jxsmusic.com/images/track-logo.png","https://jxsmusic.eta.vercel.app/images/track-logo.png",localArtwork,"http://localhost:3000/images/track-logo.png"]);
       const updatedTags = {
           title: formattedTitle,
           artist: String(track.artist),

@@ -15,7 +15,7 @@ import {
   formatTrackTitle
 } from '@/lib/utils'
 import AdminTrackUpdateUploadedForm from './helper/update-form'
-import DownloadTrackComponent from '@/components/common/download'
+import DownloadTrackFreeComponent from '@/components/common/download-free'
 
 
 interface Props {
@@ -605,7 +605,7 @@ const AdminPublishedItem = (
               bg-white/[0.02]
             "
           >
-            <DownloadTrackComponent
+            <DownloadTrackFreeComponent
               id={
                 String(
                   props.id

@@ -827,6 +827,128 @@ export const signedUrlRouter = createTRPCRouter({
       acquisitionType,
     };
   }),
+  downloadObjectAdmin: protectedProcedure
+  .input(
+    z.object({
+      id: z.string(),
+      source: z.enum(["track", "pack"]).default("track"),
+    }),
+  )
+  .mutation(async ({ input, ctx }) => {
+    const { s3, session } = ctx;
+    const { id, source } = input;
+    const userId = session.user.id;
+
+    const track = await ctx.db.track.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        artist: true,
+        title: true,
+        bpm_start: true,
+        bpm_end: true,
+        is_explicit: true,
+        is_exclusive: true,
+        in_key: true,
+        release_year: true,
+        download_key: true,
+        filetype: true,
+        user: {
+          select: {
+            image: true,
+          },
+        },
+        genre_track: {
+          select: {
+            genre: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        tag_track: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!track) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Track not found",
+      });
+    }
+
+    if (!track.download_key) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Track download key is missing",
+      });
+    }
+    const formattedTitle = formatTrackTitle(
+      track.title,
+      track.is_explicit,
+    );
+
+    const isVideo = track.filetype?.includes("video") ?? false;
+    const extension = isVideo ? "mp4" : "mp3";
+
+    const filename =
+      `${track.artist} - ${formattedTitle} ` +
+      `${track.in_key} ${track.bpm_start}.${extension}`;
+
+    const s3Client = new S3Client(s3);
+
+    if (isVideo) {
+      const createSignedUrl = async (
+        disposition: string,
+      ): Promise<string> => {
+        const command = new GetObjectCommand({
+          Bucket: "jxs-music",
+          Key: String(track.download_key),
+          ResponseContentType: track.filetype ?? "video/mp4",
+          ResponseContentDisposition: disposition,
+        });
+
+        return getSignedUrl(s3Client, command);
+      };
+
+      let url: string;
+
+      try {
+        url = await createSignedUrl(
+          contentDisposition(filename),
+        );
+      } catch (error) {
+        console.warn(
+          "Original Content-Disposition failed; using safe fallback",
+          error,
+        );
+
+        url = await createSignedUrl(
+          buildContentDisposition(filename),
+        );
+      }
+
+      return {
+        url,
+        filename,
+      };
+    }
+
+    return {
+      url: `${Initial}/${track.download_key}`,
+      filename,
+    };
+  }),
   getObject: publicProcedure
     .input(
       z.object({
