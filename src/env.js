@@ -11,13 +11,13 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    // AUTH_DISCORD_ID: z.string(),
-    // AUTH_DISCORD_SECRET: z.string(),
+    NEXT_CRON_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
     NEXT_RESEND_API: z.string(),
+    NEXT_RESEND_WEBHOOK_SECRET:z.string(),
     S3_ENDPOINT: z.string(),
     S3_ACCESS_ID: z.string(),
     S3_SECRET_KEY: z.string(),
@@ -51,11 +51,11 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
     AUTH_SECRET: process.env.AUTH_SECRET,
-    // AUTH_DISCORD_ID: process.env.AUTH_DISCORD_ID,
-    // AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
+    NEXT_CRON_SECRET: process.env.NEXT_CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_RESEND_API: process.env.NEXT_RESEND_API,
+    NEXT_RESEND_WEBHOOK_SECRET: process.env.NEXT_RESEND_WEBHOOK_SECRET,
     S3_ENDPOINT: process.env.S3_ENDPOINT,
     S3_ACCESS_ID: process.env.S3_ACCESS_ID,
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,

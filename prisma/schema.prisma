@@ -397,7 +397,7 @@ model User {
   link_mixclound  String?
   link_twitter    String?
   link_twitch     String?
-
+  weeklyEmailSubscribed Boolean @default(true)
   credit            Int             @default(0)
   is_superadmin     Boolean         @default(false)
   is_admin          Boolean         @default(false)
@@ -418,6 +418,7 @@ model User {
   album             Album[]
   reviews           Review[]
   bookings          Booking[]
+  periodUser        PeriodUser[]
 }
 
 model VerificationToken {
@@ -498,4 +499,49 @@ model DmcaRequest {
   additionalComments String?
   status             String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
   createdAt          DateTime @default(now())
+}
+
+enum PeriodIdentifier {
+  LATEST_RELEASES
+  TOP_DOWNLOADS
+  UPLOAD_REPORT
+}
+
+enum PeriodCadence {
+  WEEKLY
+  MONTHLY
+}
+
+model Period {
+  id         String           @id @default(cuid())
+  identifier PeriodIdentifier
+  cadence    PeriodCadence
+  periodKey  String
+  startAt    DateTime
+  endAt      DateTime
+  active     Boolean          @default(true)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  periodUser PeriodUser[]
+
+  @@unique([identifier, cadence, periodKey])
+  @@index([identifier, cadence, active])
+}
+
+
+model PeriodUser {
+  id             String    @id @default(cuid())
+  periodId       String
+  userId         String
+  idempotencyKey String    @unique
+  resendId       String?   @unique
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  period Period @relation(fields: [periodId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([periodId, userId])
+  @@index([periodId, sentAt])
 }

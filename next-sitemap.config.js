@@ -1,4 +1,4 @@
-const SITE_URL = "https://www.jeff92ayansumania.com";
+const SITE_URL = "https://www.jxsmusic.com";
 
 /** @type {import('next-sitemap').IConfig} */
 const config = {
@@ -13,6 +13,8 @@ const config = {
     "/payment/*",
     "/auth/*",
     "/my-cart",
+    "/editors",
+    "/reviews/*",
     "/my-order",
     "/become-editor",
     "/new-year-countdown",
@@ -34,7 +36,6 @@ const config = {
       "/tracks",
       "/multi-packs",
       "/charts",
-      "/editors",
       "/contact-us",
       "/how-to-buy",
       "/subscriptions",

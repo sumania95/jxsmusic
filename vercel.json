@@ -1,6 +1,17 @@
 {
-  "crons": [{
-    "path": "/api/cron/monthly-earning",
-    "schedule": "* 9 1 * *"
-  }]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/create-weekly-period",
+      "schedule": "5 0 * * 1"
+    },
+    {
+      "path": "/api/cron/create-monthly-period",
+      "schedule": "5 0 1 * *"
+    },
+    {
+      "path": "/api/cron/send-email-period",
+      "schedule": "* * * * *"
+    }
+  ]
 }
