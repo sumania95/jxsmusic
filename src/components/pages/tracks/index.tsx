@@ -25,9 +25,11 @@ import FilterFileTypeComponent from "@/components/common/filter-file";
 import TrackListHeader from "../common/track-header";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { LockKeyhole } from "lucide-react";
+import { LockKeyhole, TicketPercent } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import TrackColumnFilter, { useTrackColumns } from "../common/header-filter";
+import { formatCurrency, formatDateShort } from "@/lib/utils";
+import HeaderWithCouponBanner from "../home/coupon";
 
 const TracksComponent = () => {
   const { data: session } = useSession();
@@ -114,26 +116,11 @@ const TracksComponent = () => {
           {/* =====================================================
               PAGE HEADER
           ===================================================== */}
-          <section className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-white/2.5 px-5 py-8 sm:px-8 lg:px-10">
-            {/* Ambient glow */}
-            <div className="pointer-events-none absolute top-[-180px] right-[-120px] h-[400px] w-[400px] rounded-full bg-[#B9FF00]/[0.035] blur-[100px]" />
-
-            <div className="relative">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-                <span className="text-[10px] font-medium tracking-[0.2em] text-zinc-600 uppercase">
-                  Jeff92 & Ayan Sumania Library
-                </span>
-              </div>
-
-              <BannerTitleComponent
-                title="Tracks"
-                description="New releases of exclusive edits & remixes"
-              />
-            </div>
-          </section>
-
+          
+          <HeaderWithCouponBanner
+            title="Tracks"
+            description="New releases of exclusive edits & remixes"
+          />
           {/* =====================================================
               FILTER BAR
           ===================================================== */}

@@ -8,15 +8,9 @@ import { Changa_One, Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { useAtomValue } from "jotai";
 import { cartCountAtom } from "@/state/cartAtoms";
-import CouponBanner from "../pages/home/coupon";
 import Image from "next/image";
 
 const font = Inter({
-  subsets: ["latin"],
-  weight: "400",
-});
-
-const font_changa = Changa_One({
   subsets: ["latin"],
   weight: "400",
 });
@@ -56,8 +50,6 @@ const HeaderV2Components = () => {
         font.className,
       )}
     >
-      <CouponBanner />
-
       <div className="grid h-20 w-full grid-cols-[auto_auto] items-center gap-3 px-4 lg:grid-cols-[300px_1fr_300px] lg:px-10">
         {/* =========================================================
             LOGO

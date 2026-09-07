@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import PaginationNewComponents from "@/components/common/pagination-new"
+import HeaderWithCouponBanner from "../home/coupon"
 
 const MyDownloadsComponents = () => {
   const [defaultLimit] = useState(20)
@@ -131,69 +132,12 @@ const MyDownloadsComponents = () => {
         title="My Downloads"
         description="Download your purchased tracks and albums"
       />
-
-      {/* HEADER */}
-      <section
-        className="
-          relative
-          w-full
-          overflow-hidden
-          rounded-3xl
-          border
-          border-white/10
-          bg-white/[0.025]
-          px-5
-          py-8
-          sm:px-8
-          lg:px-10
-        "
-      >
-        <div
-          className="
-            pointer-events-none
-            absolute
-            right-[-120px]
-            top-[-180px]
-            h-[400px]
-            w-[400px]
-            rounded-full
-            bg-[#B9FF00]/[0.035]
-            blur-[100px]
-          "
+      <div className="w-full">
+        <HeaderWithCouponBanner
+          title="My Downloads"
+          description="Download your purchased tracks and albums"
         />
-
-        <div className="relative">
-          <div className="mb-3 flex items-center gap-2">
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-[#B9FF00]
-                shadow-[0_0_10px_rgba(185,255,0,0.7)]
-              "
-            />
-
-            <span
-              className="
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-[0.2em]
-                text-zinc-600
-              "
-            >
-              Jeff92 & Ayan Sumania Downloads
-            </span>
-          </div>
-
-          <BannerTitleComponent
-            title="My Downloads"
-            description="Download your purchased tracks and albums"
-          />
-        </div>
-      </section>
-
+      </div>
       {/* FILTERS */}
       <section
         className="

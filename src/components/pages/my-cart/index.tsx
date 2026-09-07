@@ -22,6 +22,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { PayPalCheckoutButton } from "@/components/common/paypal-checkout-button";
 import { PayPalCheckoutProvider } from "@/components/common/paypal-sdk-provider";
+import HeaderWithCouponBanner from "../home/coupon";
 
 type Coupon = {
   id: string;
@@ -120,32 +121,12 @@ const MyCartComponent = () => {
       {/* =========================================================
           JEFF92 & AYAN SUMANIA HEADER
       ========================================================== */}
-      <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-5 py-8 sm:px-8 lg:px-10">
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute top-[-180px] right-[-120px] h-[400px] w-[400px] rounded-full bg-[#B9FF00]/[0.035] blur-[100px]" />
-
-        <div className="relative">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-            <span className="text-[10px] font-medium tracking-[0.2em] text-zinc-600 uppercase">
-              Jeff92 & Ayan Sumania Checkout
-            </span>
-          </div>
-
-          <BannerTitleComponent title="Checkout" />
-
-          <div className="mt-5">
-            <Link
-              href={"/tracks"}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 text-[10px] font-medium tracking-[0.12em] text-zinc-500 uppercase transition hover:border-[#B9FF00]/20 hover:bg-[#B9FF00]/[0.04] hover:text-[#B9FF00]"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Continue Shopping
-            </Link>
-          </div>
-        </div>
-      </section>
+      <div className="w-full -mb-10">
+        <HeaderWithCouponBanner
+          title="Checkout"
+          description="Review your order, apply your coupon, and complete your purchase securely."
+        />
+      </div>
 
       {/* =========================================================
           NO SESSION

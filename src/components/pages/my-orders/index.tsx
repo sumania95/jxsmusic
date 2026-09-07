@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { DownloadZipComponent } from "@/components/common/download-zip";
 import PendingOrderPayment from "./pending-order-payment";
 import { PayPalCheckoutProvider } from "@/components/common/paypal-sdk-provider";
+import HeaderWithCouponBanner from "../home/coupon";
 
 const MyOrdersComponents = () => {
   const [defaultLimit] = useState(5);
@@ -116,34 +117,13 @@ const MyOrdersComponents = () => {
         {/* =====================================================
           JEFF92 & AYAN SUMANIA HEADER
       ===================================================== */}
-        <section className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-5 py-8 sm:px-8 lg:px-10">
-          <div className="pointer-events-none absolute top-[-180px] right-[-120px] h-[400px] w-[400px] rounded-full bg-[#B9FF00]/[0.035] blur-[100px]" />
+        <div className="w-full">
+          <HeaderWithCouponBanner
+            title="My Orders"
+            description="Track, credits and manage your orders"
+          />
 
-          <div className="relative">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-              <span className="text-[10px] font-medium tracking-[0.2em] text-zinc-600 uppercase">
-                Jeff92 & Ayan Sumania Orders
-              </span>
-            </div>
-
-            <BannerTitleComponent
-              title="Your Orders"
-              description="Track and manage your orders"
-            />
-
-            <div className="mt-5">
-              <Link
-                href={"/tracks"}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 text-[10px] font-medium tracking-[0.12em] text-zinc-500 uppercase transition-all hover:border-[#B9FF00]/20 hover:bg-[#B9FF00]/[0.04] hover:text-[#B9FF00]"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Continue Shopping
-              </Link>
-            </div>
-          </div>
-        </section>
+        </div>
 
         {/* =====================================================
           PAYMENT ERROR
@@ -333,15 +313,14 @@ const MyOrdersComponents = () => {
                   {/* STATUS */}
                   <div className="shrink-0 md:w-28">
                     <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold tracking-wider uppercase ${
-                        item.status === "PAID"
+                      className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold tracking-wider uppercase ${item.status === "PAID"
                           ? "border-green-500/20 bg-green-500/10 text-green-400"
                           : item.status === "PENDING"
                             ? "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-[#B9FF00]"
                             : item.status === "FAILED"
                               ? "border-red-500/20 bg-red-500/10 text-red-400"
                               : "border-white/[0.06] bg-white/[0.025] text-zinc-500"
-                      } `}
+                        } `}
                     >
                       {item.status}
                     </span>

@@ -10,7 +10,6 @@ import SoftwareCarousel from './helper/software-carousel'
 import StepsGrid from './helper/step-grid'
 import HomeNewReleasesComponent from './helper/new-releases'
 import AlbumScrollRow from './helper/album'
-import CouponBanner from './coupon'
 
 const font = Changa_One({
   subsets: ['latin'],
@@ -26,7 +25,6 @@ const HomeComponent = () => {
       />
 
       <main className="relative w-full overflow-hidden">
-        <CouponBanner/>
         {/* ================= HERO ================= */}
         <section className="relative flex flex-col items-center text-center pt-24 pb-32">
           {/* Glow */}

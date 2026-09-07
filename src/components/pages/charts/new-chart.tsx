@@ -22,6 +22,7 @@ import TrackItemComponent from "../common/data-item"
 import TrackListHeader from "../common/track-header"
 import { useSession } from "next-auth/react"
 import { useTrackColumns } from "../common/header-filter"
+import HeaderWithCouponBanner from "../home/coupon"
 
 // Change this path to the real location of your component.
 
@@ -134,25 +135,10 @@ const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boo
   return (
     <div className="w-full">
       {/* Header */}
-      <section className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] px-5 py-8 sm:rounded-3xl sm:px-8 lg:px-10">
-        <div className="pointer-events-none absolute right-[-120px] top-[-180px] h-[400px] w-[400px] rounded-full bg-[#B9FF00]/[0.04] blur-[100px]" />
-
-        <div className="relative">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-              Jeff92 & Ayan Sumania Charts
-            </span>
-          </div>
-
-          <BannerTitleComponent
-            title="Top DJ Tracks"
+      <HeaderWithCouponBanner
+                 title="Top DJ Tracks"
             description="Discover the edits DJs are downloading, previewing, and playing right now."
-          />
-        </div>
-      </section>
-
+                />
       {/* Chart navigation */}
       {/* Mobile chart navigation */}
 <div

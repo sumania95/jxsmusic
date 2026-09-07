@@ -17,6 +17,7 @@ import MultiPackItemComponent from "../common/multi-pack-data-item"
 import DataGenreComponent from "@/components/common/filter-genre"
 import DataTagComponent from "@/components/common/filter-tag"
 import FilterActiveResetComponents from "@/components/common/filter-active-reset"
+import HeaderWithCouponBanner from "../home/coupon"
 
 const MultiPacksComponent = () => {
   const itemSkeleton: number[] = Array.from(
@@ -75,44 +76,10 @@ const MultiPacksComponent = () => {
             HEADER
         ===================================================== */}
         <div className="border-b border-white/5 pb-4">
-          <section className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-5 py-8 sm:px-8 lg:px-10">
-  {/* Ambient glow */}
-  <div
-    className="
-      pointer-events-none
-      absolute
-      right-[-120px]
-      top-[-180px]
-      h-[400px]
-      w-[400px]
-      rounded-full
-      bg-[#B9FF00]/[0.035]
-      blur-[100px]
-    "
-  />
-
-  <div className="relative">
-    <div className="mb-3 flex items-center gap-2">
-      <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-      <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-        Jeff92 & Ayan Sumania Library
-      </span>
-    </div>
-
-    <div className="flex items-end justify-between gap-4">
-      <BannerTitleComponent
-        title="Multi Packs"
-        description="Multi Packs of exclusive albums & remixes"
-      />
-
-      <span className="shrink-0 pb-1 text-[9px] font-medium uppercase tracking-widest text-zinc-700">
-        {totalItems} Packs
-      </span>
-    </div>
-  </div>
-</section>
-
+          <HeaderWithCouponBanner
+            title="Multi Packs"
+            description="Multi Packs of exclusive albums & remixes"
+          />
           {/* ===================================================
               FILTERS
           =================================================== */}

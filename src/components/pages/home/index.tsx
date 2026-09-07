@@ -24,7 +24,7 @@ const HomeComponent = () => {
         title="Jeff92 & Ayan Sumania — Audio & Video DJ Edits"
         description="Official audio edits, video edits, remix packs and DJ press kits from Jeff92 and Ayan Sumania."
       />
-      <main className="relative min-h-screen overflow-hidden bg-[#111518] text-zinc-100">
+      <main className="relative min-h-screen overflow-hidden bg-[#111518] text-zinc-100 -mt-7">
         {/* HERO */}
         <section className="relative overflow-hidden px-4 pb-20 pt-28 lg:px-10 lg:pb-32 lg:pt-36">
           {/* Ambient glow */}
