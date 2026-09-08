@@ -94,7 +94,16 @@ model Track {
   downloadTrack  DownloadTrack[]
 
   @@unique([title, artist, is_explicit])
-  @@index([title, artist])
+  // Default track-list query and default ordering.
+  @@index([is_published, is_reviewed, is_disabled, releaseAt, updatedAt])
+  @@index([userId, is_published, is_reviewed, is_disabled, releaseAt])
+
+  @@index([is_published, is_reviewed, is_disabled, energy])
+  @@index([is_published, is_reviewed, is_disabled, bpm_start])
+  @@index([is_published, is_reviewed, is_disabled, release_year])
+  @@index([is_published, is_reviewed, is_disabled, price])
+  @@index([is_published, is_reviewed, is_disabled, in_key])
+  @@index([is_published, is_reviewed, is_disabled, filetype])
 }
 
 model Album {

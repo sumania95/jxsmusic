@@ -165,6 +165,7 @@ const TrackDetailRelatedComponent = () => {
       {/* Track list header */}
       <TrackListHeader 
         visibleColumns={visibleColumns}
+        sortDisabled
       />
       {/* =====================================================
           TRACK LIST

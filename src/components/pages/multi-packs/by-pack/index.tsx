@@ -761,6 +761,7 @@ const MultiPackDetailComponent = (props: Props) => {
           {/* Track list header */}
           <TrackListHeader 
             visibleColumns={visibleColumns}
+            sortDisabled
           />
 
           {album?.count._count.id === 0 && (

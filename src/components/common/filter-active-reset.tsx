@@ -17,6 +17,42 @@ import { getEnergyTheme } from "@/utils/energy-theme";
 const MINIMUM_YEAR = 1950;
 const CURRENT_YEAR = new Date().getFullYear();
 
+type TrackSortKey =
+  | "track"
+  | "key"
+  | "bpm"
+  | "energy"
+  | "release_year"
+  | "price";
+
+type TrackSortOrder = "asc" | "desc";
+
+const SORTABLE_COLUMNS: TrackSortKey[] = [
+  "track",
+  "key",
+  "bpm",
+  "energy",
+  "release_year",
+  "price",
+];
+
+const SORT_ORDERS: TrackSortOrder[] = [
+  "asc",
+  "desc",
+];
+
+const SORT_LABELS: Record<
+  TrackSortKey,
+  string
+> = {
+  track: "Track",
+  key: "Key",
+  bpm: "BPM",
+  energy: "Energy",
+  release_year: "Year",
+  price: "Price",
+};
+
 const FilterActiveResetComponents = () => {
   const [bpm, setBpm] = useQueryState(
     "bpm",
@@ -107,6 +143,21 @@ const FilterActiveResetComponents = () => {
       }),
   );
 
+  const [sort, setSort] = useQueryState(
+    "sort",
+    parseAsStringEnum<TrackSortKey>(
+      SORTABLE_COLUMNS,
+    ),
+  );
+
+  const [sortOrder, setSortOrder] =
+    useQueryState(
+      "order",
+      parseAsStringEnum<TrackSortOrder>(
+        SORT_ORDERS,
+      ),
+    );
+
   const toggleFiletype = (type: string) => {
     void setFiletypes((previous) => {
       const exists = previous.includes(type);
@@ -179,6 +230,11 @@ const FilterActiveResetComponents = () => {
     void setExplicit("all");
   };
 
+  const resetSort = () => {
+    void setSort(null);
+    void setSortOrder(null);
+  };
+
   const toggleResetAll = () => {
     void setBpm([0, 200]);
     void setGenres([]);
@@ -189,6 +245,8 @@ const FilterActiveResetComponents = () => {
     void setExplicit("all");
     void setYearFrom(MINIMUM_YEAR);
     void setYearTo(CURRENT_YEAR);
+    void setSort(null);
+    void setSortOrder(null);
   };
 
   const bpmStart = bpm[0] ?? 0;
@@ -207,7 +265,8 @@ const FilterActiveResetComponents = () => {
     selectedEnergy.length > 0 ||
     filetypes.length > 0 ||
     explicit !== "all" ||
-    hasCustomYearRange;
+    hasCustomYearRange ||
+    sort !== null;
 
   if (!hasActiveFilters) {
     return null;
@@ -350,6 +409,19 @@ const FilterActiveResetComponents = () => {
             variant="year"
           />
         )}
+
+        {/* SORT */}
+        {sort && (
+          <FilterButton
+            label={`Sort: ${SORT_LABELS[sort]} ${
+              sortOrder === "desc"
+                ? "↓"
+                : "↑"
+            }`}
+            onRemove={resetSort}
+            variant="sort"
+          />
+        )}
       </div>
 
       <div className="shrink-0">
@@ -389,7 +461,8 @@ type FilterButtonVariant =
   | "default"
   | "success"
   | "danger"
-  | "year";
+  | "year"
+  | "sort";
 
 type FilterButtonProps = {
   label: string;
@@ -416,8 +489,12 @@ const FilterButton = ({
 
     danger:
       "border-red-400/20 bg-red-400/[0.06] text-red-400",
+
     year:
       "border-violet-400/20 bg-violet-400/[0.06] text-violet-300",
+
+    sort:
+      "border-blue-400/20 bg-blue-400/[0.06] text-blue-300",
   };
 
   return (

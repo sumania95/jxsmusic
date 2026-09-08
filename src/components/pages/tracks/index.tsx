@@ -33,6 +33,30 @@ import HeaderWithCouponBanner from "../home/coupon";
 import DataEnergyComponent from "@/components/common/filter-energy";
 import DataYearComponent from "@/components/common/filter-year";
 
+type TrackSortKey =
+  | "track"
+  | "key"
+  | "bpm"
+  | "energy"
+  | "release_year"
+  | "price";
+
+type TrackSortOrder = "asc" | "desc";
+
+const SORTABLE_COLUMNS: TrackSortKey[] = [
+  "track",
+  "key",
+  "bpm",
+  "energy",
+  "release_year",
+  "price",
+];
+
+const SORT_ORDERS: TrackSortOrder[] = [
+  "asc",
+  "desc",
+];
+
 const TracksComponent = () => {
   const { data: session } = useSession();
   const reduceMotion = useReducedMotion();
@@ -42,108 +66,178 @@ const TracksComponent = () => {
     resetColumns,
   } = useTrackColumns()
   const itemSkeleton: number[] = Array.from(
-    { length: 20 },
-    (_, index) => index + 1,
-  );
-  const CURRENT_YEAR = new Date().getFullYear();
-  const MINIMUM_YEAR = 1950;
-  const [defaultLimit] = useAtom(defaultPageLimit);
-  const [state] = useAtom(filterState);
+  { length: 20 },
+  (_, index) => index + 1,
+);
 
-  const [genres] = useQueryState(
-    "genres",
-    parseAsArrayOf(parseAsString).withDefault([]),
-  );
+const CURRENT_YEAR = new Date().getFullYear();
+const MINIMUM_YEAR = 1950;
 
-  const [tags] = useQueryState(
-    "tags",
-    parseAsArrayOf(parseAsString).withDefault([]),
-  );
+const [defaultLimit] = useAtom(defaultPageLimit);
+const [state] = useAtom(filterState);
 
-  const [selectedKeys] = useQueryState(
-    "key",
-    parseAsArrayOf(parseAsString).withDefault([]),
-  );
+const [genres] = useQueryState(
+  "genres",
+  parseAsArrayOf(parseAsString).withDefault([]),
+);
 
-  const [filetypes] = useQueryState(
-    "filetype",
-    parseAsArrayOf(parseAsStringEnum(["audio", "video"])).withDefault([]),
-  );
-  const [explicit, setExplicit] = useQueryState("explicit", parseAsStringEnum(["all", "clean", "dirty"]).withDefault("all"));
+const [tags] = useQueryState(
+  "tags",
+  parseAsArrayOf(parseAsString).withDefault([]),
+);
 
-  const [bpm] = useQueryState(
-    "bpm",
-    parseAsArrayOf(parseAsInteger).withDefault([0, 200]),
-  );
+const [selectedKeys] = useQueryState(
+  "key",
+  parseAsArrayOf(parseAsString).withDefault([]),
+);
 
-  const [pager] = useQueryState("page", parseAsInteger.withDefault(1));
+const [filetypes] = useQueryState(
+  "filetype",
+  parseAsArrayOf(
+    parseAsStringEnum(["audio", "video"]),
+  ).withDefault([]),
+);
 
-  const [search] = useQueryState("search", {
-    defaultValue: "",
+const [explicit] = useQueryState(
+  "explicit",
+  parseAsStringEnum([
+    "all",
+    "clean",
+    "dirty",
+  ]).withDefault("all"),
+);
+
+const [bpm] = useQueryState(
+  "bpm",
+  parseAsArrayOf(parseAsInteger).withDefault([
+    0,
+    200,
+  ]),
+);
+
+const [pager] = useQueryState(
+  "page",
+  parseAsInteger.withDefault(1),
+);
+
+const [search] = useQueryState("search", {
+  defaultValue: "",
+});
+
+const [limit] = useQueryState(
+  "limit",
+  parseAsInteger.withDefault(defaultLimit),
+);
+
+const [selectedEnergy] = useQueryState(
+  "energy",
+  parseAsArrayOf(parseAsInteger).withDefault([]),
+);
+
+const [yearFrom] = useQueryState(
+  "yearFrom",
+  parseAsInteger.withDefault(MINIMUM_YEAR),
+);
+
+const [yearTo] = useQueryState(
+  "yearTo",
+  parseAsInteger.withDefault(CURRENT_YEAR),
+);
+
+/*
+ * Sorting starts blank.
+ * The table header writes these values when clicked.
+ */
+const [sort] = useQueryState(
+  "sort",
+  parseAsStringEnum<TrackSortKey>(
+    SORTABLE_COLUMNS,
+  ),
+);
+
+const [sortOrder] = useQueryState(
+  "order",
+  parseAsStringEnum<TrackSortOrder>(
+    SORT_ORDERS,
+  ),
+);
+
+const energy =
+  selectedEnergy.length > 0
+    ? selectedEnergy
+    : undefined;
+
+const hasCustomYearRange =
+  yearFrom !== MINIMUM_YEAR ||
+  yearTo !== CURRENT_YEAR;
+
+const { data: credits } =
+  api.credits.balance.useQuery(undefined, {
+    enabled: Boolean(session?.user),
   });
 
-  const [limit] = useQueryState(
-    "limit",
-    parseAsInteger.withDefault(defaultLimit),
-  );
-  const [selectedEnergy] = useQueryState(
-    "energy",
-    parseAsArrayOf(parseAsInteger).withDefault([]),
-  );
-  const [yearFrom] = useQueryState(
-    "yearFrom",
-    parseAsInteger.withDefault(MINIMUM_YEAR),
-  );
+const {
+  data: track,
+  isLoading,
+} = api.track.getAllMainReleases.useQuery({
+  search,
+  genre: genres,
+  tag: tags,
+  key: selectedKeys,
 
-  const [yearTo] = useQueryState(
-    "yearTo",
-    parseAsInteger.withDefault(CURRENT_YEAR),
-  );
-  const energy =
-    selectedEnergy.length > 0
-      ? selectedEnergy
-      : undefined;
+  bpm_start: bpm[0],
+  bpm_end: bpm[1],
 
-  const hasCustomYearRange =
-    yearFrom !== MINIMUM_YEAR ||
-    yearTo !== CURRENT_YEAR;
+  skip: session?.user
+    ? Number(Number(pager) * limit - limit)
+    : 0,
 
+  take: session?.user
+    ? limit
+    : Math.min(limit, 20),
 
-  const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boolean(session?.user) })
-  const { data: track, isLoading } = api.track.getAllMainReleases.useQuery({
-    search,
-    genre: genres,
-    tag: tags,
-    key: selectedKeys,
-    bpm_start: bpm[0],
-    bpm_end: bpm[1],
-    skip: session?.user ? Number(Number(pager) * limit - limit) : 0,
-    take: session?.user ? limit : Math.min(limit, 20),
-    is_editor: false,
-    is_editor_id: null,
-    selectionFilter: state.selectionFilter,
-    filetypes,
-    explicit,
-    // Optional Mixed In Key energy filter.
-    energy,
+  is_editor: false,
+  is_editor_id: null,
+  selectionFilter: state.selectionFilter,
+  filetypes,
+  explicit,
 
-    // Omit the year filter when the full default range is selected.
-    year_start: hasCustomYearRange
-      ? yearFrom
-      : undefined,
+  energy,
 
-    year_end: hasCustomYearRange
-      ? yearTo
-      : undefined,
-  });
-  const page = Number(pager) || 1
-  const total = Number(track?.count._count.id) || 0
+  year_start: hasCustomYearRange
+    ? yearFrom
+    : undefined,
 
-  const start = total === 0
+  year_end: hasCustomYearRange
+    ? yearTo
+    : undefined,
+
+  /*
+   * Sorting is omitted until a column is clicked.
+   */
+  sort: sort ?? undefined,
+
+  sort_order: sort
+    ? (sortOrder ?? "asc")
+    : undefined,
+},{
+    placeholderData: (previousData) =>
+      previousData,
+  },);
+
+const page = Number(pager) || 1;
+const total =
+  Number(track?.count._count.id) || 0;
+
+const start =
+  total === 0
     ? 0
-    : (page - 1) * limit + 1
+    : (page - 1) * limit + 1;
 
-  const end = Math.min(page * limit, total)
+const end = Math.min(
+  page * limit,
+  total,
+);
   return (
     <>
       <ProfileMeta title="New Releases" description="Collection of DJ Music" />

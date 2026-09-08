@@ -1019,55 +1019,101 @@ export const trackRouter = createTRPCRouter({
           tracks:tracks
         }
     }),
-    getAllMainReleases: publicProcedure
-    .input(z.object({
-      search:z.string().nullish(), 
-      genre:z.array(z.string()),
-      tag:z.array(z.string()),
-      key:z.array(z.string()), 
-      bpm_start:z.number().min(0).max(200).default(0),
-      bpm_end:z.number().min(0).max(200).default(200), 
-      take: z.number().max(100),
-      skip: z.number(),
-      is_editor:z.boolean(),
-      is_editor_id:z.string().nullable(),
-      selectionFilter:z.string().nullish(),
-      // ✅ NEW
-      filetypes: z.array(z.string()).optional(),
-      explicit: z.enum(["all", "clean", "dirty"]).default("all"),
-      // Mixed In Key energy levels.
-      energy: z
-        .array(
-          z.number().int().min(1).max(10),
-        )
-        .optional(),
+   getAllMainReleases: publicProcedure
+  .input(
+    z
+      .object({
+        search: z.string().nullish(),
+        genre: z.array(z.string()),
+        tag: z.array(z.string()),
+        key: z.array(z.string()),
 
-      // Release-year range.
-      year_start: z
-        .number()
-        .int()
-        .min(1950)
-        .max(CURRENT_YEAR)
-        .optional(),
+        bpm_start: z
+          .number()
+          .min(0)
+          .max(200)
+          .default(0),
 
-      year_end: z
-        .number()
-        .int()
-        .min(1950)
-        .max(CURRENT_YEAR)
-        .optional(),
-    }).refine(
-    (input) =>
-      input.year_start === undefined ||
-      input.year_end === undefined ||
-      input.year_start <= input.year_end,
-    {
-      message:
-        "Starting year cannot be greater than ending year",
-      path: ["year_start"],
-    },
-  ))
-    .query(async ({ ctx, input }) => {
+        bpm_end: z
+          .number()
+          .min(0)
+          .max(200)
+          .default(200),
+
+        take: z.number().max(100),
+        skip: z.number(),
+
+        is_editor: z.boolean(),
+        is_editor_id: z.string().nullable(),
+        selectionFilter: z.string().nullish(),
+
+        filetypes: z
+          .array(z.string())
+          .optional(),
+
+        explicit: z
+          .enum([
+            "all",
+            "clean",
+            "dirty",
+          ])
+          .default("all"),
+
+        // Mixed In Key energy levels.
+        energy: z
+          .array(
+            z
+              .number()
+              .int()
+              .min(1)
+              .max(10),
+          )
+          .optional(),
+
+        // Release-year range.
+        year_start: z
+          .number()
+          .int()
+          .min(1950)
+          .max(CURRENT_YEAR)
+          .optional(),
+
+        year_end: z
+          .number()
+          .int()
+          .min(1950)
+          .max(CURRENT_YEAR)
+          .optional(),
+
+        // Optional sorting.
+        sort: z
+          .enum([
+            "track",
+            "key",
+            "bpm",
+            "energy",
+            "release_year",
+            "price",
+          ])
+          .optional(),
+
+        sort_order: z
+          .enum(["asc", "desc"])
+          .optional(),
+      })
+      .refine(
+        (input) =>
+          input.year_start === undefined ||
+          input.year_end === undefined ||
+          input.year_start <= input.year_end,
+        {
+          message:
+            "Starting year cannot be greater than ending year",
+          path: ["year_start"],
+        },
+      ),
+  )
+  .query(async ({ ctx, input }) => {
     const audioTypes = [
       "audio/mpeg",
       "audio/mp3",
@@ -1084,14 +1130,17 @@ export const trackRouter = createTRPCRouter({
         ? {
             filetype: {
               in:
-                input.filetypes[0] === "audio"
+                input.filetypes[0] ===
+                "audio"
                   ? audioTypes
                   : videoTypes,
             },
           }
         : {};
 
-    const searchTerms = (input.search ?? "")
+    const searchTerms = (
+      input.search ?? ""
+    )
       .trim()
       .split(/\s+/)
       .filter(Boolean);
@@ -1105,11 +1154,13 @@ export const trackRouter = createTRPCRouter({
 
       ...(searchTerms.length > 0
         ? {
-            AND: searchTerms.map((term) => ({
-              keywords: {
-                contains: term,
-              },
-            })),
+            AND: searchTerms.map(
+              (term) => ({
+                keywords: {
+                  contains: term,
+                },
+              }),
+            ),
           }
         : {}),
 
@@ -1131,13 +1182,15 @@ export const trackRouter = createTRPCRouter({
           }
         : {}),
 
-      ...(input.selectionFilter === "opm"
+      ...(input.selectionFilter ===
+      "opm"
         ? {
             is_opm: true,
           }
         : {}),
 
-      ...(input.selectionFilter === "exclusive"
+      ...(input.selectionFilter ===
+      "exclusive"
         ? {
             is_exclusive: true,
           }
@@ -1194,19 +1247,24 @@ export const trackRouter = createTRPCRouter({
         : {}),
 
       // Optional release-year range.
-      ...(input.year_start !== undefined ||
+      ...(input.year_start !==
+        undefined ||
       input.year_end !== undefined
         ? {
             release_year: {
-              ...(input.year_start !== undefined
+              ...(input.year_start !==
+              undefined
                 ? {
-                    gte: input.year_start,
+                    gte:
+                      input.year_start,
                   }
                 : {}),
 
-              ...(input.year_end !== undefined
+              ...(input.year_end !==
+              undefined
                 ? {
-                    lte: input.year_end,
+                    lte:
+                      input.year_end,
                   }
                 : {}),
             },
@@ -1214,69 +1272,118 @@ export const trackRouter = createTRPCRouter({
         : {}),
     };
 
-    const [count, tracks] = await Promise.all([
-      ctx.db.track.count({
-        where: filter,
-      }),
+    /*
+     * Maps the URL/UI sort names to
+     * their actual Prisma Track fields.
+     */
+    const sortFieldMap = {
+      track: "title",
+      key: "in_key",
+      bpm: "bpm_start",
+      energy: "energy",
+      release_year: "release_year",
+      price: "price",
+    } as const;
 
-      ctx.db.track.findMany({
-        where: filter,
-        take: input.take,
-        skip: input.skip,
-        orderBy: [
-          {
-            releaseAt: "desc",
-          },
-          {
-            updatedAt: "desc",
-          },
-        ],
-        select: {
-          id: true,
-          title: true,
-          artist: true,
-          filetype: true,
-          price: true,
-          is_explicit: true,
-          preview_key: true,
-          duration: true,
-          releaseAt: true,
-          in_key: true,
-          energy: true,
-          bpm_start: true,
-          bpm_end: true,
-          release_year: true,
-
-          genre_track: {
-            select: {
-              genre: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-
-          tag_track: {
-            select: {
-              tag: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-
-          user: {
-            select: {
-              id: true,
-              username: true,
-              image: true,
-            },
-          },
+    /*
+     * Keep your original order when
+     * no sort column is selected.
+     */
+    const defaultOrderBy: Prisma.TrackOrderByWithRelationInput[] =
+      [
+        {
+          releaseAt: "desc",
         },
-      }),
-    ]);
+        {
+          updatedAt: "desc",
+        },
+      ];
+
+    const sortDirection: Prisma.SortOrder =
+      input.sort_order ?? "asc";
+
+    const selectedOrderBy:
+      | Prisma.TrackOrderByWithRelationInput
+      | undefined = input.sort
+      ? {
+          [sortFieldMap[input.sort]]:
+            sortDirection,
+        }
+      : undefined;
+
+    const orderBy: Prisma.TrackOrderByWithRelationInput[] =
+      selectedOrderBy
+        ? [
+            selectedOrderBy,
+
+            // Stable fallback when two values match.
+            {
+              releaseAt: "desc",
+            },
+            {
+              updatedAt: "desc",
+            },
+          ]
+        : defaultOrderBy;
+
+    const [count, tracks] =
+      await Promise.all([
+        ctx.db.track.count({
+          where: filter,
+        }),
+
+        ctx.db.track.findMany({
+          where: filter,
+          take: input.take,
+          skip: input.skip,
+          orderBy,
+
+          select: {
+            id: true,
+            title: true,
+            artist: true,
+            filetype: true,
+            price: true,
+            is_explicit: true,
+            preview_key: true,
+            duration: true,
+            releaseAt: true,
+            in_key: true,
+            energy: true,
+            bpm_start: true,
+            bpm_end: true,
+            release_year: true,
+
+            genre_track: {
+              select: {
+                genre: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+
+            tag_track: {
+              select: {
+                tag: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+
+            user: {
+              select: {
+                id: true,
+                username: true,
+                image: true,
+              },
+            },
+          },
+        }),
+      ]);
 
     return {
       count: {

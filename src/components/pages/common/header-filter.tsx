@@ -8,6 +8,14 @@ import {
 } from "@/components/ui/popover"
 import { Settings } from "lucide-react"
 
+export type TrackSortKey =
+  | "track"
+  | "key"
+  | "bpm"
+  | "energy"
+  | "release_year"
+  | "price";
+
 export type TrackColumnKey =
   | "play"
   | "avatar"
@@ -29,6 +37,7 @@ export const TRACK_COLUMNS = [
     width: "40px",
     align: "left",
     configurable: false,
+    sortable: false,
   },
   {
     key: "avatar",
@@ -36,6 +45,7 @@ export const TRACK_COLUMNS = [
     width: "40px",
     align: "left",
     configurable: false,
+    sortable: false,
   },
   {
     key: "track",
@@ -43,6 +53,7 @@ export const TRACK_COLUMNS = [
     width: "minmax(180px, 1fr)",
     align: "left",
     configurable: false,
+    sortable: true,
   },
   {
     key: "key",
@@ -50,6 +61,7 @@ export const TRACK_COLUMNS = [
     width: "56px",
     align: "center",
     configurable: true,
+    sortable: true,
   },
   {
     key: "bpm",
@@ -57,6 +69,7 @@ export const TRACK_COLUMNS = [
     width: "64px",
     align: "center",
     configurable: true,
+    sortable: true,
   },
   {
     key: "energy",
@@ -64,6 +77,7 @@ export const TRACK_COLUMNS = [
     width: "72px",
     align: "center",
     configurable: true,
+    sortable: true,
   },
   {
     key: "release_year",
@@ -71,6 +85,7 @@ export const TRACK_COLUMNS = [
     width: "64px",
     align: "center",
     configurable: true,
+    sortable: true,
   },
   {
     key: "genre",
@@ -78,6 +93,7 @@ export const TRACK_COLUMNS = [
     width: "140px",
     align: "left",
     configurable: true,
+    sortable: false,
   },
   {
     key: "tags",
@@ -85,6 +101,7 @@ export const TRACK_COLUMNS = [
     width: "140px",
     align: "left",
     configurable: true,
+    sortable: false,
   },
   {
     key: "type",
@@ -92,6 +109,7 @@ export const TRACK_COLUMNS = [
     width: "64px",
     align: "left",
     configurable: true,
+    sortable: false,
   },
   {
     key: "duration",
@@ -99,6 +117,7 @@ export const TRACK_COLUMNS = [
     width: "56px",
     align: "center",
     configurable: true,
+    sortable: false,
   },
   {
     key: "price",
@@ -106,14 +125,16 @@ export const TRACK_COLUMNS = [
     width: "140px",
     align: "right",
     configurable: false,
+    sortable: true,
   },
 ] as const satisfies ReadonlyArray<{
-  key: TrackColumnKey
-  label: string
-  width: string
-  align: "left" | "center" | "right"
-  configurable: boolean
-}>
+  key: TrackColumnKey;
+  label: string;
+  width: string;
+  align: "left" | "center" | "right";
+  configurable: boolean;
+  sortable: boolean;
+}>;
 
 const STORAGE_KEY = "track-list-visible-columns"
 
