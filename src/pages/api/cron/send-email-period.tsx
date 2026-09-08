@@ -47,6 +47,7 @@ export default async function handler(
     const period = await db.period.findFirst({
       where: {
         active: true,
+        identifier:"LATEST_RELEASES"
       },
       orderBy: {
         createdAt: "asc",

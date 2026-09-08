@@ -30,6 +30,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import TrackColumnFilter, { useTrackColumns } from "../common/header-filter";
 import { formatCurrency, formatDateShort } from "@/lib/utils";
 import HeaderWithCouponBanner from "../home/coupon";
+import DataEnergyComponent from "@/components/common/filter-energy";
+import DataYearComponent from "@/components/common/filter-year";
 
 const TracksComponent = () => {
   const { data: session } = useSession();
@@ -43,7 +45,8 @@ const TracksComponent = () => {
     { length: 20 },
     (_, index) => index + 1,
   );
-
+  const CURRENT_YEAR = new Date().getFullYear();
+  const MINIMUM_YEAR = 1950;
   const [defaultLimit] = useAtom(defaultPageLimit);
   const [state] = useAtom(filterState);
 
@@ -83,6 +86,29 @@ const TracksComponent = () => {
     "limit",
     parseAsInteger.withDefault(defaultLimit),
   );
+  const [selectedEnergy] = useQueryState(
+    "energy",
+    parseAsArrayOf(parseAsInteger).withDefault([]),
+  );
+  const [yearFrom] = useQueryState(
+    "yearFrom",
+    parseAsInteger.withDefault(MINIMUM_YEAR),
+  );
+
+  const [yearTo] = useQueryState(
+    "yearTo",
+    parseAsInteger.withDefault(CURRENT_YEAR),
+  );
+  const energy =
+    selectedEnergy.length > 0
+      ? selectedEnergy
+      : undefined;
+
+  const hasCustomYearRange =
+    yearFrom !== MINIMUM_YEAR ||
+    yearTo !== CURRENT_YEAR;
+
+
   const { data: credits } = api.credits.balance.useQuery(undefined, { enabled: Boolean(session?.user) })
   const { data: track, isLoading } = api.track.getAllMainReleases.useQuery({
     search,
@@ -98,6 +124,17 @@ const TracksComponent = () => {
     selectionFilter: state.selectionFilter,
     filetypes,
     explicit,
+    // Optional Mixed In Key energy filter.
+    energy,
+
+    // Omit the year filter when the full default range is selected.
+    year_start: hasCustomYearRange
+      ? yearFrom
+      : undefined,
+
+    year_end: hasCustomYearRange
+      ? yearTo
+      : undefined,
   });
   const page = Number(pager) || 1
   const total = Number(track?.count._count.id) || 0
@@ -116,7 +153,7 @@ const TracksComponent = () => {
           {/* =====================================================
               PAGE HEADER
           ===================================================== */}
-          
+
           <HeaderWithCouponBanner
             title="Tracks"
             description="New releases of exclusive edits & remixes"
@@ -144,7 +181,12 @@ const TracksComponent = () => {
                   <div className="shrink-0">
                     <DataKeyComponent />
                   </div>
-
+                  <div className="shrink-0">
+                    <DataEnergyComponent />
+                  </div>
+                  <div className="shrink-0">
+                    <DataYearComponent />
+                  </div>
                   <div className="shrink-0 items-center rounded-xl border border-white/10 bg-[#111518]/40 px-2 lg:flex">
                     <FilterFileTypeComponent />
                   </div>

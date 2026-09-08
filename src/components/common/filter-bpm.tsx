@@ -98,17 +98,6 @@ const DataBPMComponent = () => {
         "
       >
         <span className="flex items-center gap-2">
-          <SlidersHorizontal
-            className="
-              h-3.5
-              w-3.5
-              text-zinc-500
-              transition-colors
-              group-hover:text-[#B9FF00]
-              group-data-[state=open]:text-[#B9FF00]
-            "
-          />
-
           <span>BPM</span>
 
           {isFiltered && (

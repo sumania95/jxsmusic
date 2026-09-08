@@ -17,6 +17,7 @@ import path from "path";
 import fs from "fs";
 import { z } from "zod";
 import contentDisposition from "content-disposition";
+import type { Prisma } from "generated/prisma";
 
 interface Metadata {
   data:{
@@ -35,7 +36,7 @@ interface Metadata {
 const Initial =  "https://d2v08wdwrbjeru.cloudfront.net"
 
 const MAX_ARTWORK_SIZE = 300 * 1024; // 300 KB
-
+const CURRENT_YEAR = new Date().getFullYear();
 async function loadAndProcessArtwork(
   urls: (string | undefined | null)[],
 ): Promise<{
@@ -1034,142 +1035,258 @@ export const trackRouter = createTRPCRouter({
       // ✅ NEW
       filetypes: z.array(z.string()).optional(),
       explicit: z.enum(["all", "clean", "dirty"]).default("all"),
-    }))
-    .query(async({ ctx,input }) => {
-      const current_date = new Date()
-      current_date.setUTCHours(0, 0, 0, 0);
-      const audioTypes = ["audio/mpeg", "audio/mp3"];
-      const videoTypes = ["video/mp4", "video/webm", "video/mov"];
+      // Mixed In Key energy levels.
+      energy: z
+        .array(
+          z.number().int().min(1).max(10),
+        )
+        .optional(),
 
-      const filetypeFilter =
-        input.filetypes?.length === 1
-          ? {
-              filetype: {
-                in:
-                  input.filetypes?.[0] === "audio"
-                    ? audioTypes
-                    : videoTypes,
+      // Release-year range.
+      year_start: z
+        .number()
+        .int()
+        .min(1950)
+        .max(CURRENT_YEAR)
+        .optional(),
+
+      year_end: z
+        .number()
+        .int()
+        .min(1950)
+        .max(CURRENT_YEAR)
+        .optional(),
+    }).refine(
+    (input) =>
+      input.year_start === undefined ||
+      input.year_end === undefined ||
+      input.year_start <= input.year_end,
+    {
+      message:
+        "Starting year cannot be greater than ending year",
+      path: ["year_start"],
+    },
+  ))
+    .query(async ({ ctx, input }) => {
+    const audioTypes = [
+      "audio/mpeg",
+      "audio/mp3",
+    ];
+
+    const videoTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/mov",
+    ];
+
+    const filetypeFilter =
+      input.filetypes?.length === 1
+        ? {
+            filetype: {
+              in:
+                input.filetypes[0] === "audio"
+                  ? audioTypes
+                  : videoTypes,
+            },
+          }
+        : {};
+
+    const searchTerms = (input.search ?? "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const filter: Prisma.TrackWhereInput = {
+      is_published: true,
+      is_reviewed: true,
+      is_disabled: false,
+
+      ...filetypeFilter,
+
+      ...(searchTerms.length > 0
+        ? {
+            AND: searchTerms.map((term) => ({
+              keywords: {
+                contains: term,
               },
-            }
-          : {}
-      const searchTerms = (input.search ?? "").trim().split(/\s+/).filter(Boolean);
+            })),
+          }
+        : {}),
 
+      ...(input.explicit === "dirty"
+        ? {
+            is_explicit: true,
+          }
+        : input.explicit === "clean"
+          ? {
+              is_explicit: false,
+            }
+          : {}),
 
-      const filter = {
-        is_published:true,
-        is_reviewed:true,
-        is_disabled:false,
-        // filetype:"audio/mpeg",
-        // releaseAt:{
-        //   lte:current_date.toISOString()
-        // },
-        ...filetypeFilter, // ✅ ADD HERE
-        ...(searchTerms.length ? { AND: searchTerms.map((term) => ({ keywords: { contains: term } })) } : {}),
-        ...(input.explicit === "dirty" ? { is_explicit: true } : input.explicit === "clean" ? { is_explicit: false } : {}),
-        ...input.is_editor_id?{
-          user:{
-            id:input.is_editor_id
+      ...(input.is_editor_id
+        ? {
+            user: {
+              id: input.is_editor_id,
+            },
           }
-        }:{},
-        ...input.selectionFilter==="opm"?{
-          is_opm:true
-        }:{},
-        ...input.selectionFilter==="exclusive"?{
-          is_exclusive:true
-        }:{},
-        ...input.genre.length>0?{
-          genre_track:{
-            some:{
-              genre:{
-                slug:{
-                  in:input.genre
-                }
-              }
-            }
+        : {}),
+
+      ...(input.selectionFilter === "opm"
+        ? {
+            is_opm: true,
           }
-        }:{},
-        ...input.tag.length>0?{
-          tag_track:{
-            some:{
-              tag:{
-                slug:{
-                  in:input.tag
-                }
-              }
-            }
+        : {}),
+
+      ...(input.selectionFilter === "exclusive"
+        ? {
+            is_exclusive: true,
           }
-        }:{},
-        bpm_start:{
-          gte:Number(input.bpm_start),
-          lte:Number(input.bpm_end)
-        },
-        ...input.key.length>0?{
-          in_key:{
-            in:input.key
+        : {}),
+
+      ...(input.genre.length > 0
+        ? {
+            genre_track: {
+              some: {
+                genre: {
+                  slug: {
+                    in: input.genre,
+                  },
+                },
+              },
+            },
           }
-        }:{},
-      }
-      const count = await ctx.db.track.aggregate({
-        where:filter,
-        _count: {
+        : {}),
+
+      ...(input.tag.length > 0
+        ? {
+            tag_track: {
+              some: {
+                tag: {
+                  slug: {
+                    in: input.tag,
+                  },
+                },
+              },
+            },
+          }
+        : {}),
+
+      bpm_start: {
+        gte: input.bpm_start,
+        lte: input.bpm_end,
+      },
+
+      ...(input.key.length > 0
+        ? {
+            in_key: {
+              in: input.key,
+            },
+          }
+        : {}),
+
+      // Optional energy filter.
+      ...(input.energy?.length
+        ? {
+            energy: {
+              in: input.energy,
+            },
+          }
+        : {}),
+
+      // Optional release-year range.
+      ...(input.year_start !== undefined ||
+      input.year_end !== undefined
+        ? {
+            release_year: {
+              ...(input.year_start !== undefined
+                ? {
+                    gte: input.year_start,
+                  }
+                : {}),
+
+              ...(input.year_end !== undefined
+                ? {
+                    lte: input.year_end,
+                  }
+                : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [count, tracks] = await Promise.all([
+      ctx.db.track.count({
+        where: filter,
+      }),
+
+      ctx.db.track.findMany({
+        where: filter,
+        take: input.take,
+        skip: input.skip,
+        orderBy: [
+          {
+            releaseAt: "desc",
+          },
+          {
+            updatedAt: "desc",
+          },
+        ],
+        select: {
           id: true,
+          title: true,
+          artist: true,
+          filetype: true,
+          price: true,
+          is_explicit: true,
+          preview_key: true,
+          duration: true,
+          releaseAt: true,
+          in_key: true,
+          energy: true,
+          bpm_start: true,
+          bpm_end: true,
+          release_year: true,
+
+          genre_track: {
+            select: {
+              genre: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+
+          tag_track: {
+            select: {
+              tag: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+
+          user: {
+            select: {
+              id: true,
+              username: true,
+              image: true,
+            },
+          },
         },
-      })
-      const tracks =  await ctx.db.track.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [
-            { releaseAt: "desc" },
-            { updatedAt: "desc" },
-          ],
-          where: filter,
-          select:{
-            id:true,
-            title:true,
-            artist:true,
-            filetype:true,
-            price:true,
-            is_explicit:true,
-            preview_key:true,
-            duration:true,
-            releaseAt:true,
-            in_key:true,
-            energy:true,
-            bpm_start:true,
-            bpm_end:true,
-            release_year:true,
-            genre_track:{
-              select:{
-                genre:{
-                  select:{
-                    name:true
-                  }
-                }
-              }
-            },
-            tag_track:{
-              select:{
-                tag:{
-                  select:{
-                    name:true
-                  }
-                }
-              }
-            },
-            user:{
-              select:{
-                id:true,
-                username:true,
-                image:true,
-              }
-            }
-          }
-        });
-        return {
-          count:count,
-          tracks:tracks
-        }
-    }),
+      }),
+    ]);
+
+    return {
+      count: {
+        _count: {
+          id: count,
+        },
+      },
+      tracks,
+    };
+  }),
      getIdMain: publicProcedure
     .input(z.object({
       id:z.string(), 
