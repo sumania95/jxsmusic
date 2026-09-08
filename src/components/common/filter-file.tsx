@@ -125,7 +125,7 @@ const FilterFileTypeComponent = () => {
   ]
 
   return (
-    <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className="flex md:grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
       {options.map((option) => (
         <label
           key={option.value}

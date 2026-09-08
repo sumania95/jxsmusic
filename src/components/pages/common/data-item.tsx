@@ -508,6 +508,17 @@ const TrackItemComponent = (props: Props) => {
           border-white/5 px-4 py-2 md:hidden
         "
       >
+        <span
+          className="
+            truncate text-xs uppercase tracking-wider
+            text-yellow-600
+          "
+        >
+          {props.price === 0
+            ? "Free"
+            : formatCurrency(props.price)}
+        </span>
+        <MetadataDivider />
         <MetadataItem>
           <span style={{ color: currentKey.color }}>
             {props.in_key ?? "--"}
@@ -537,19 +548,6 @@ const TrackItemComponent = (props: Props) => {
         <MetadataItem>
           {props.genre_track[0]?.genre.name ?? "No genre"}
         </MetadataItem>
-
-        <MetadataDivider />
-
-        <span
-          className="
-            truncate text-xs uppercase tracking-wider
-            text-yellow-600
-          "
-        >
-          {props.price === 0
-            ? "Free"
-            : formatCurrency(props.price)}
-        </span>
       </div>
     </div>
   )
