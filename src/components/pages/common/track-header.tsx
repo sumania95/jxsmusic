@@ -193,9 +193,9 @@ const SortIcon = ({
       {!active ? (
         <ArrowUpDown className="h-3 w-3 text-zinc-700 transition-colors group-hover:text-zinc-400" />
       ) : order === "asc" ? (
-        <ArrowUp className="h-3 w-3 text-[#B9FF00]" />
-      ) : (
         <ArrowDown className="h-3 w-3 text-[#B9FF00]" />
+      ) : (
+        <ArrowUp className="h-3 w-3 text-[#B9FF00]" />
       )}
     </span>
   );

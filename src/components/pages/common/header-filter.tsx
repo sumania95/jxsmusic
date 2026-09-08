@@ -61,7 +61,7 @@ export const TRACK_COLUMNS = [
     width: "56px",
     align: "center",
     configurable: true,
-    sortable: true,
+    sortable: false,
   },
   {
     key: "bpm",
