@@ -31,10 +31,8 @@ interface Props {
   bpm_start: number
   bpm_end: number
   release_year: number
-  is_opm: boolean
-  is_disabled: boolean
   is_explicit: boolean
-  is_exclusive: boolean
+  is_disabled: boolean
   _count:{
     downloadTrack:number
   },

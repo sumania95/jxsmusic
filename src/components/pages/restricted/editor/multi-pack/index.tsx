@@ -69,40 +69,6 @@ const MultiPacksComponent = () => {
       />
 
       {/* =====================================================
-          HEADER
-      ===================================================== */}
-      {/* <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-5 py-8 sm:px-8 lg:px-10">
-        <div
-          className="
-            pointer-events-none
-            absolute
-            right-[-120px]
-            top-[-180px]
-            h-[400px]
-            w-[400px]
-            rounded-full
-            bg-[#B9FF00]/[0.035]
-            blur-[100px]
-          "
-        />
-
-        <div className="relative">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#B9FF00] shadow-[0_0_10px_rgba(185,255,0,0.7)]" />
-
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-              Jeff92 & Ayan Sumania Library
-            </span>
-          </div>
-
-          <BannerTitleComponent
-            title="Multi Packs"
-            description="Create and manage grouped collections of DJ tracks."
-          />
-        </div>
-      </section> */}
-
-      {/* =====================================================
           ACTIONS / FILTERS
       ===================================================== */}
       <section
@@ -309,10 +275,8 @@ const MultiPacksComponent = () => {
             itemSkeleton.map((_, index) => (
               <div
                 key={index}
-                className="mb-2 overflow-hidden rounded-2xl border border-white/[0.05] bg-white/[0.015]"
-              >
-                <DataItemUploadTrackSkeletonComponents />
-              </div>
+                className="h-[76px] w-full animate-pulse rounded-2xl border border-white/5 bg-white/2.5"
+              />
             ))}
 
           {/* Packs */}

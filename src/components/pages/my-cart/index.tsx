@@ -383,7 +383,7 @@ const MyCartComponent = () => {
                           }}
                           onSuccess={() =>{
                             void utils.cart.getAll.invalidate()
-                            void router.push("/my-orders?payment=success")
+                            void router.push("/account?type=orders")
                           }
                           }
                           onCancel={() => {

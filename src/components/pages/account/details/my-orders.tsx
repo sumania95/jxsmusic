@@ -244,82 +244,85 @@ const MyOrdersComponents = () => {
             <div className="flex w-full flex-col gap-2">
               {order?.orders.map((item) => (
                 <article
-                  key={item.id}
-                  className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111518]/50 transition hover:border-[#B9FF00]/20 hover:bg-[#111518]/80"
-                >
-                  <div className="absolute inset-y-0 left-0 w-0.5 bg-[#B9FF00]/0 transition group-hover:bg-[#B9FF00]" />
+  key={item.id}
+  className="group relative grid overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111518]/50 transition hover:border-[#B9FF00]/20 hover:bg-[#111518]/80"
+>
+  <div className="absolute inset-y-0 left-0 w-0.5 bg-[#B9FF00]/0 transition group-hover:bg-[#B9FF00]" />
 
-                  <div className="flex flex-col gap-4 border-b border-white/[0.06] p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-sm font-semibold text-zinc-100">
-                          Order #{item.checkoutId}
-                        </h3>
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold tracking-wider uppercase ${
-                            item.status === "PAID"
-                              ? "border-green-500/20 bg-green-500/10 text-green-400"
-                              : item.status === "PENDING"
-                                ? "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-[#B9FF00]"
-                                : item.status === "FAILED"
-                                  ? "border-red-500/20 bg-red-500/10 text-red-400"
-                                  : "border-white/[0.08] bg-white/[0.03] text-zinc-500"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </div>
+  <header className="grid gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5">
+    <div className="grid min-w-0 grid-flow-col auto-cols-max items-center justify-start gap-2">
+        <h3 className="truncate text-sm font-semibold text-zinc-100">
+          Order #{item.checkoutId}
+        </h3>
 
-                      <p className="mt-1 text-xs text-zinc-500">
-                        Placed {formatDateShort(item.createdAt)}
-                      </p>
-                    </div>
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-semibold tracking-wider uppercase ${
+            item.status === "PAID"
+              ? "border-green-500/20 bg-green-500/10 text-green-400"
+              : item.status === "PENDING"
+                ? "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-[#B9FF00]"
+                : item.status === "FAILED"
+                  ? "border-red-500/20 bg-red-500/10 text-red-400"
+                  : "border-white/[0.08] bg-white/[0.03] text-zinc-500"
+          }`}
+        >
+          {item.status}
+        </span>
+    </div>
 
-                    <div className="sm:text-right">
-                      <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-600">
-                        Order total
-                      </p>
-                      <p className="mt-1 text-lg font-bold text-[#B9FF00]">
-                        {formatCurrency(item.finalAmount)}
-                      </p>
-                    </div>
-                  </div>
-                  {item.failedReason && (
-                    <div className="mx-4 mb-4 rounded-xl border border-red-500/15 bg-red-500/[0.05] px-4 py-3 sm:mx-5 sm:mb-5">
-                      <p className="text-[9px] font-semibold uppercase tracking-wider text-red-400">
-                        Payment failure
-                      </p>
-                      <p className="mt-1 text-xs text-red-300/70">
-                        {item.failedReason}
-                      </p>
-                    </div>
-                  )}
+    <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 sm:text-right">
+      Placed {formatDateShort(item.createdAt)}
+    </p>
+  </header>
 
-                  {(item.status === "PAID" || item.status === "PENDING") && (
-                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/[0.06] bg-white/[0.015] p-3 sm:px-5">
-                      {item.status === "PAID" && (
-                        <Link
-                          href="?type=purchases"
-                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 text-[10px] font-bold text-black transition hover:bg-cyan-600 active:scale-[0.98]"
-                        >
-                          View purchases
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      )}
+  <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-5">
+    <div className="min-w-24">
+      <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+        Order total
+      </p>
 
-                      {item.status === "PENDING" && (
-                        <>
-                          <PendingOrderPayment referenceId={item.referenceId} />
-                          <CancelOrderComponents
-                            referenceId={String(item.referenceId)}
-                            take={limit}
-                            skip={pager * limit - limit}
-                          />
-                        </>
-                      )}
-                    </div>
-                  )}
-                </article>
+      <p className="mt-1 text-lg font-bold text-[#B9FF00]">
+        {formatCurrency(item.finalAmount)}
+      </p>
+    </div>
+
+    <div className="grid gap-3 sm:grid-flow-col sm:items-end">
+      {item.status === "PAID" && (
+        <Link
+          href="?type=purchases"
+          className="grid h-10 grid-flow-col place-items-center gap-2 rounded-xl bg-cyan-500 px-4 text-[10px] font-bold text-black transition hover:bg-cyan-600 active:scale-[0.98]"
+        >
+          View purchases
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
+
+      {item.status === "PENDING" && (
+        <div className="grid gap-2 sm:grid-flow-col sm:items-center">
+          <PendingOrderPayment referenceId={item.referenceId} />
+
+          <CancelOrderComponents
+            referenceId={String(item.referenceId)}
+            take={limit}
+            skip={pager * limit - limit}
+          />
+        </div>
+      )}
+    </div>
+  </div>
+
+  {item.failedReason && (
+    <div className="mx-4 mb-4 grid rounded-xl border border-red-500/15 bg-red-500/[0.05] px-4 py-3 sm:mx-5 sm:mb-5">
+      <p className="text-[9px] font-semibold uppercase tracking-wider text-red-400">
+        Payment failure
+      </p>
+
+      <p className="mt-1 text-xs text-red-300/70">
+        {item.failedReason}
+      </p>
+    </div>
+  )}
+</article>
               ))}
             </div>
           </div>
@@ -338,40 +341,3 @@ const MyOrdersComponents = () => {
 };
 
 export default MyOrdersComponents;
-
-type OrderDetailProps = {
-  label: string;
-  value: string;
-};
-
-const OrderDetail = ({ label, value }: OrderDetailProps) => (
-  <div>
-    <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-zinc-600">
-      {label}
-    </p>
-    <p className="mt-1 break-all text-sm text-zinc-300">{value}</p>
-  </div>
-);
-
-type TrackDetailsProps = {
-  track: {
-    bpm_start: number;
-    bpm_end: number;
-    in_key: string | null;
-  };
-};
-
-const TrackDetails = ({ track }: TrackDetailsProps) => {
-  const bpm =
-    track.bpm_end && track.bpm_end !== track.bpm_start
-      ? `${track.bpm_start}-${track.bpm_end} BPM`
-      : `${track.bpm_start} BPM`;
-
-  return (
-    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-zinc-600">
-      <span>{bpm}</span>
-      <span aria-hidden="true">•</span>
-      <span>{track.in_key ?? "Unknown key"}</span>
-    </div>
-  );
-};

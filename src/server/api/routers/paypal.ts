@@ -61,7 +61,7 @@ export const paypalRouter = createTRPCRouter({
           await prisma.cart.deleteMany({ where: { userId } });
         });
 
-        return { kind: "FREE" as const, redirectUrl: "/my-orders" };
+        return { kind: "FREE" as const, redirectUrl: "/account?type=orders" };
       }
 
       let coupon = null;

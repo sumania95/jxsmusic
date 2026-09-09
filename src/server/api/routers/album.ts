@@ -10,6 +10,7 @@ import slugify from 'slugify'
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+const CURRENT_YEAR = new Date().getFullYear();
 
 const Preview = "https://d2v08wdwrbjeru.cloudfront.net"
 export const albumRouter = createTRPCRouter({
@@ -21,7 +22,7 @@ export const albumRouter = createTRPCRouter({
         filetype: z.string(),
       })
     )
-    .mutation(async ({ ctx,input }) => {
+    .mutation(async ({ ctx, input }) => {
       const key = `albums/${crypto.randomUUID()}-${input.filename}`;
       const s3Configuration = new S3Client(ctx.s3);
       const command = new PutObjectCommand({
@@ -42,103 +43,103 @@ export const albumRouter = createTRPCRouter({
     }),
 
   create: publicProcedure
-   .input(z.object({
-    name: z.string(),
-    artist: z.string().optional(),
-    price: z.number(),
-    tracks: z.array(z.object({
-      trackId: z.string(),
-    })),
-    image: z.string().nullable(),
-    imageKey: z.string().nullable(),
-    isActive:z.boolean()
-  }))
-  .mutation(async ({ input, ctx }) => {
-    return ctx.db.album.create({
-      data: {
-        name: input.name,
-        artist: input.artist,
-        price: input.price,
-        slug:slugify(input.name,{lower: true}),
-        userId: String(ctx?.session?.user.id),
-        trackAlbum: {
-          create: input.tracks.map(t => ({
-            trackId: t.trackId,
-          })),
+    .input(z.object({
+      name: z.string(),
+      artist: z.string().optional(),
+      price: z.number(),
+      tracks: z.array(z.object({
+        trackId: z.string(),
+      })),
+      image: z.string().nullable(),
+      imageKey: z.string().nullable(),
+      isActive: z.boolean()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.db.album.create({
+        data: {
+          name: input.name,
+          artist: input.artist,
+          price: input.price,
+          slug: slugify(input.name, { lower: true }),
+          userId: String(ctx?.session?.user.id),
+          trackAlbum: {
+            create: input.tracks.map(t => ({
+              trackId: t.trackId,
+            })),
+          },
+          image: input.image ?? "",
+          imageKey: input.imageKey ?? "",
+          isActive: input.isActive,
         },
-        image: input.image ?? "",
-        imageKey: input.imageKey ?? "",
-        isActive:input.isActive,
-      },
-    });
-  }),
+      });
+    }),
 
   update: publicProcedure
-   .input(z.object({
-    id: z.string(),
-    name: z.string(),
-    artist: z.string().optional(),
-    price: z.number(),
-    image: z.string().nullable(),
-    imageKey: z.string().nullable(),
-    isActive:z.boolean()
-  }))
-  .mutation(async ({ input, ctx }) => {
-    // Get existing user
-    const album = await ctx.db.album.findUnique({
-      where: { id: input.id },
-    });
-    const s3Configuration = new S3Client(ctx.s3);
-    if(input.image && album?.imageKey){
-      const params = {
-        Bucket: "jxs-music",
-        Key: album.imageKey,
-      };
-    
-      try {
-        await s3Configuration.send(new DeleteObjectCommand(params));
-      } catch (error) {
-        console.log(`Error deleting ${album.imageKey} from jxs-music`, error);
+    .input(z.object({
+      id: z.string(),
+      name: z.string(),
+      artist: z.string().optional(),
+      price: z.number(),
+      image: z.string().nullable(),
+      imageKey: z.string().nullable(),
+      isActive: z.boolean()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // Get existing user
+      const album = await ctx.db.album.findUnique({
+        where: { id: input.id },
+      });
+      const s3Configuration = new S3Client(ctx.s3);
+      if (input.image && album?.imageKey) {
+        const params = {
+          Bucket: "jxs-music",
+          Key: album.imageKey,
+        };
+
+        try {
+          await s3Configuration.send(new DeleteObjectCommand(params));
+        } catch (error) {
+          console.log(`Error deleting ${album.imageKey} from jxs-music`, error);
+        }
       }
-    }
-    return ctx.db.album.update({
-      where:{
-        id:input.id,
-        userId:ctx.session?.user.id
-      },
-      data: {
-        name: input.name,
-        artist: input.artist,
-        price: input.price,
-        slug:slugify(input.name,{lower: true}),
-        ...(input.image && { image: input.image }),
-        ...(input.imageKey && { imageKey: input.imageKey }),
-        isActive:input.isActive,
-      },
-    });
-  }),
+      return ctx.db.album.update({
+        where: {
+          id: input.id,
+          userId: ctx.session?.user.id
+        },
+        data: {
+          name: input.name,
+          artist: input.artist,
+          price: input.price,
+          slug: slugify(input.name, { lower: true }),
+          ...(input.image && { image: input.image }),
+          ...(input.imageKey && { imageKey: input.imageKey }),
+          isActive: input.isActive,
+        },
+      });
+    }),
   getIdUpdate: protectedProcedure
-  .input(z.object({ 
-    id: z.string(),
-  }))
-  .query(async ({ ctx, input }) => {
-    console.log(input.id)
-    const album =  await ctx.db.album.findUnique({
-      where:{
-        id:input.id,
-        userId:ctx.session.user.id
-      },
-      select:{
-        id:true,
-        name:true,
-        artist:true,
-        price:true,
-        image:true,
-        isActive:true,
-      }
-    });
-    return album
-  }),
+    .input(z.object({
+      id: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      console.log(input.id)
+      const album = await ctx.db.album.findUnique({
+        where: {
+          id: input.id,
+          userId: ctx.session.user.id
+        },
+        select: {
+          id: true,
+          name: true,
+          artist: true,
+          price: true,
+          image: true,
+          isActive: true,
+        }
+      });
+      return album
+    }),
   search: publicProcedure
     .input(z.object({
       q: z.string().min(1),
@@ -154,67 +155,127 @@ export const albumRouter = createTRPCRouter({
           ],
           ...input.excludeIds?.length
             ? {
-                id: {
-                  notIn: input.excludeIds, // 👈 THIS excludes selected tracks
-                },
-              }
+              id: {
+                notIn: input.excludeIds, // 👈 THIS excludes selected tracks
+              },
+            }
             : {},
           is_published: true,
-          userId:ctx.session?.user.id
+          userId: ctx.session?.user.id
         },
-        select:{
-          id:true,
-          title:true,
-          artist:true,
-          is_explicit:true
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          is_explicit: true
         },
         take: input.limit,
         orderBy: { title: "asc" },
       });
-  }),
+    }),
   getReleasedTrack: protectedProcedure
     .input(
-    z.object({
-      search: z.string().nullish(),
-      genre: z.array(z.string()),
-      tag: z.array(z.string()),
-      key: z.array(z.string()),
+      z.object({
+        search: z.string().nullish(),
+        genre: z.array(z.string()),
+        tag: z.array(z.string()),
+        key: z.array(z.string()),
 
-      bpm_start: z.number().min(0).max(200).default(0),
-      bpm_end: z.number().min(0).max(200).default(200),
+        bpm_start: z.number().min(0).max(200).default(0),
+        bpm_end: z.number().min(0).max(200).default(200),
 
-      take: z.number().max(100),
-      skip: z.number(),
+        take: z.number().max(100),
+        skip: z.number(),
 
-      // 👇 OPTIONAL FILTER
-      hideAlbumTracks: z.boolean().optional(), // default: show all
-    })
-  )
-  .query(async ({ ctx, input }) => {
-    const filter =  {
-      is_published: true,
-      is_reviewed: true,
-      is_disabled: false,
+        // 👇 OPTIONAL FILTER
+        hideAlbumTracks: z.boolean().optional(), // default: show all
+        filetypes: z
+          .array(z.string())
+          .optional(),
 
-      keywords: {
-        contains: input.search ?? undefined,
-      },
+        explicit: z
+          .enum([
+            "all",
+            "clean",
+            "dirty",
+          ])
+          .default("all"),
 
-      // user: {
-      //   id: ctx.session.user.id,
-      // },
+        // Mixed In Key energy levels.
+        energy: z
+          .array(
+            z
+              .number()
+              .int()
+              .min(1)
+              .max(10),
+          )
+          .optional(),
 
-      // 👇 ONLY hide when explicitly enabled
-      ...(input.hideAlbumTracks
-        ? {
+        // Release-year range.
+        year_start: z
+          .number()
+          .int()
+          .min(1950)
+          .max(CURRENT_YEAR)
+          .optional(),
+
+        year_end: z
+          .number()
+          .int()
+          .min(1950)
+          .max(CURRENT_YEAR)
+          .optional(),
+      }).refine(
+        (input) =>
+          input.year_start === undefined ||
+          input.year_end === undefined ||
+          input.year_start <= input.year_end,
+        {
+          message:
+            "Starting year cannot be greater than ending year",
+          path: ["year_start"],
+        },
+      ),
+    )
+    .query(async ({ ctx, input }) => {
+      const audioTypes = ["audio/mpeg", "audio/mp3"];
+      const videoTypes = ["video/mp4", "video/webm", "video/mov"];
+      const filetypeFilter =
+        input.filetypes?.length === 1
+          ? {
+            filetype: {
+              in:
+                input.filetypes?.[0] === "audio"
+                  ? audioTypes
+                  : videoTypes,
+            },
+          }
+          : {}
+      const searchTerms = (input.search ?? "").trim().split(/\s+/).filter(Boolean);
+
+      const filter = {
+        is_published: true,
+        is_reviewed: true,
+        is_disabled: false,
+        ...filetypeFilter,
+        ...(searchTerms.length ? { AND: searchTerms.map((term) => ({ keywords: { contains: term } })) } : {}),
+
+        // user: {
+        //   id: ctx.session.user.id,
+        // },
+
+        // 👇 ONLY hide when explicitly enabled
+        ...(input.hideAlbumTracks
+          ? {
             trackAlbum: {
               none: {},
             },
           }
-        : {}),
+          : {}),
 
-      ...(input.genre.length > 0
-        ? {
+        ...(input.genre.length > 0
+          ? {
             genre_track: {
               some: {
                 genre: {
@@ -225,10 +286,10 @@ export const albumRouter = createTRPCRouter({
               },
             },
           }
-        : {}),
+          : {}),
 
-      ...(input.tag.length > 0
-        ? {
+        ...(input.tag.length > 0
+          ? {
             tag_track: {
               some: {
                 tag: {
@@ -239,174 +300,243 @@ export const albumRouter = createTRPCRouter({
               },
             },
           }
-        : {}),
+          : {}),
 
-      bpm_start: {
-        gte: input.bpm_start,
-        lte: input.bpm_end,
-      },
-
-      ...(input.key.length > 0
-        ? {
+        bpm_start: {
+          gte: input.bpm_start,
+          lte: input.bpm_end,
+        },
+        ...(input.explicit === "dirty"
+          ? {
+            is_explicit: true,
+          }
+          : input.explicit === "clean"
+            ? {
+              is_explicit: false,
+            }
+            : {}),
+        ...(input.key.length > 0
+          ? {
             in_key: {
               in: input.key,
             },
           }
-        : {}),
-    }
+          : {}),
 
-    const count = await ctx.db.track.aggregate({
-      where: filter,
-      _count: {
-        id: true,
-      },
-    })
-
-    const tracks = await ctx.db.track.findMany({
-      take: input.take,
-      skip: input.skip,
-      where: filter,
-      orderBy: {
-        releaseAt: "desc",
-      },
-      select: {
-        id: true,
-        title: true,
-        artist: true,
-        is_explicit: true,
-        releaseAt: true,
-        in_key: true,
-        price: true,
-      },
-    })
-
-    return {
-      count,
-      tracks,
-    }
-  }),
-  getId: publicProcedure
-  .input(z.object({ 
-    slug: z.string(),
-  }))
-  .query(async ({ ctx, input }) => {
-    const album =  await ctx.db.album.findUnique({
-      where:{
-        slug:input.slug
-      },
-      select:{
-        id:true,
-        name:true,
-        slug:true,
-        artist:true,
-        price:true,
-        image:true,
-        user:{
-          select:{
-            id:true,
-            image:true,
-            username:true
+        // Optional energy filter.
+        ...(input.energy?.length
+          ? {
+            energy: {
+              in: input.energy,
+            },
           }
-        },
+          : {}),
 
+        // Optional release-year range.
+        ...(input.year_start !==
+          undefined ||
+          input.year_end !== undefined
+          ? {
+            release_year: {
+              ...(input.year_start !==
+                undefined
+                ? {
+                  gte:
+                    input.year_start,
+                }
+                : {}),
+
+              ...(input.year_end !==
+                undefined
+                ? {
+                  lte:
+                    input.year_end,
+                }
+                : {}),
+            },
+          }
+          : {}),
       }
-    });
-    return album
-  }),
+      const [count, tracks] = await Promise.all([
+        ctx.db.track.count({
+          where: filter,
+        }),
+        ctx.db.track.findMany({
+          take: input.take,
+          skip: input.skip,
+          where: filter,
+          orderBy: {
+            releaseAt: "desc",
+          },
+          select: {
+            id: true,
+            title: true,
+            artist: true,
+            filetype: true,
+            price: true,
+            is_explicit: true,
+            preview_key: true,
+            duration: true,
+            releaseAt: true,
+            in_key: true,
+            energy: true,
+            bpm_start: true,
+            bpm_end: true,
+            release_year: true,
+            size: true,
+            genre_track: {
+              select: {
+                genre: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+
+            tag_track: {
+              select: {
+                tag: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      ])
+      return {
+        count: {
+          _count: {
+            id: count,
+          },
+        },
+        tracks,
+      }
+    }),
+  getId: publicProcedure
+    .input(z.object({
+      slug: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const album = await ctx.db.album.findUnique({
+        where: {
+          slug: input.slug
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          artist: true,
+          price: true,
+          image: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+              username: true
+            }
+          },
+
+        }
+      });
+      return album
+    }),
 
   getIdFull: publicProcedure
-  .input(z.object({ 
-    slug: z.string(),
-    take: z.number().max(100),
-    skip: z.number(),
-  }))
-  .query(async ({ ctx, input }) => {
-    const count = await ctx.db.trackAlbum.aggregate({
-      where:{
-        album:{
-          slug:input.slug
-        }
-      },
-      _count: {
-        id: true,
-      },
-    })
-    const album =  await ctx.db.trackAlbum.findMany({
-      where:{
-        album:{
-          slug:input.slug
-        }
-      },
-      orderBy:[
-        {
-          track:{
-            title:"asc"
+    .input(z.object({
+      slug: z.string(),
+      take: z.number().max(100),
+      skip: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const count = await ctx.db.trackAlbum.aggregate({
+        where: {
+          album: {
+            slug: input.slug
           }
         },
-        {
-          track:{
-            artist:"asc"
+        _count: {
+          id: true,
+        },
+      })
+      const album = await ctx.db.trackAlbum.findMany({
+        where: {
+          album: {
+            slug: input.slug
           }
-        }
-      ],
-      take:input.take,
-      skip:input.skip,
-      select:{
-        track:{
-          select:{
-            id:true,
-            title:true,
-            artist:true,
-            filetype:true,
-            is_opm:true,
-            is_explicit:true,
-            preview_key:true,
-            is_exclusive:true,
-            duration:true,
-            releaseAt:true,
-            in_key:true,
-            energy:true,
-            price:true,
-            bpm_start:true,
-            bpm_end:true,
-            release_year:true,
-            user:{
-              select:{
-                id:true,
-                username:true,
-                image:true,
-              }
-            },
-            genre_track:{
-              select:{
-                genre:{
-                  select:{
-                    name:true
+        },
+        orderBy: [
+          {
+            track: {
+              title: "asc"
+            }
+          },
+          {
+            track: {
+              artist: "asc"
+            }
+          }
+        ],
+        take: input.take,
+        skip: input.skip,
+        select: {
+          track: {
+            select: {
+              id: true,
+              title: true,
+              artist: true,
+              filetype: true,
+              is_opm: true,
+              is_explicit: true,
+              preview_key: true,
+              is_exclusive: true,
+              duration: true,
+              releaseAt: true,
+              in_key: true,
+              energy: true,
+              price: true,
+              bpm_start: true,
+              bpm_end: true,
+              release_year: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  image: true,
+                }
+              },
+              genre_track: {
+                select: {
+                  genre: {
+                    select: {
+                      name: true
+                    }
                   }
                 }
-              }
-            },
-            tag_track:{
-              select:{
-                tag:{
-                  select:{
-                    name:true
+              },
+              tag_track: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true
+                    }
                   }
                 }
-              }
-            },
+              },
+            }
           }
         }
+      });
+      return {
+        album,
+        count
       }
-    });
-    return {
-      album,
-      count
-    }
-  }),
+    }),
 
-   delete: publicProcedure
-    .input(z.object({ 
+  delete: publicProcedure
+    .input(z.object({
       id: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -414,97 +544,97 @@ export const albumRouter = createTRPCRouter({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return await ctx.db.genre.delete({
         where: {
-          id:input.id,
+          id: input.id,
         },
       });
     }),
   getAll: protectedProcedure
-  .input(z.object({
-      search:z.string().nullish(), 
-      sort:z.string().default("asc"), 
+    .input(z.object({
+      search: z.string().nullish(),
+      sort: z.string().default("asc"),
       take: z.number().max(100),
       skip: z.number(),
     }))
-    .query(async({ ctx,input }) => {
+    .query(async ({ ctx, input }) => {
       const filter = {
-        name:{
-          contains:String(input.search)
+        name: {
+          contains: String(input.search)
         },
         // userId:ctx.session.user.id
       }
       const count = await ctx.db.album.aggregate({
-        where:filter,
+        where: filter,
         _count: {
           id: true,
         },
       })
       const albums = await ctx.db.album.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [{ 
-            createdAt: input.sort === "desc" ? "desc" : "asc",
-          },],
-          where: filter,
-          select:{
-            id:true,
-            name:true,
-            artist:true,
-            isActive:true,
-            price:true,
-            image:true,
-            user:{
-              select:{
-                image:true,
-              }
-            },
-            trackAlbum:{
-              select:{
-                track:{
-                  select:{
-                    id:true,
-                    title:true,
-                    artist:true,
-                    description:true,
-                    bpm_start:true,
-                    bpm_end:true,
-                    release_year:true,
-                    in_key:true,
-                    is_explicit:true,
-                    is_opm:true,
-                    is_exclusive:true,
-                    price:true,
-                    genre_track:{
-                      select:{
-                        genreId:true,
-                      }
-                    },
-                    tag_track:{
-                      select:{
-                        tagId:true,
-                      }
-                    },
-                  }
+        take: input.take,
+        skip: input.skip,
+        orderBy: [{
+          createdAt: input.sort === "desc" ? "desc" : "asc",
+        },],
+        where: filter,
+        select: {
+          id: true,
+          name: true,
+          artist: true,
+          isActive: true,
+          price: true,
+          image: true,
+          user: {
+            select: {
+              image: true,
+            }
+          },
+          trackAlbum: {
+            select: {
+              track: {
+                select: {
+                  id: true,
+                  title: true,
+                  artist: true,
+                  description: true,
+                  bpm_start: true,
+                  bpm_end: true,
+                  release_year: true,
+                  in_key: true,
+                  is_explicit: true,
+                  is_opm: true,
+                  is_exclusive: true,
+                  price: true,
+                  genre_track: {
+                    select: {
+                      genreId: true,
+                    }
+                  },
+                  tag_track: {
+                    select: {
+                      tagId: true,
+                    }
+                  },
                 }
               }
             }
           }
-        });
-
-        return {
-          count:count,
-          albums:albums
         }
+      });
+
+      return {
+        count: count,
+        albums: albums
+      }
     }),
-    getAllMain: publicProcedure
+  getAllMain: publicProcedure
     .input(z.object({
-      search:z.string().nullish(),
-      genre:z.array(z.string()),
-      tag:z.array(z.string()), 
-      sort:z.string().default("desc"), 
+      search: z.string().nullish(),
+      genre: z.array(z.string()),
+      tag: z.array(z.string()),
+      sort: z.string().default("desc"),
       take: z.number().max(100),
       skip: z.number(),
     }))
-    .query(async({ ctx,input }) => {
+    .query(async ({ ctx, input }) => {
       // const filter = {
       //   name:{
       //     contains:String(input.search)
@@ -541,7 +671,7 @@ export const albumRouter = createTRPCRouter({
       // }
       const filter = {
         ...(input.search
-        ? {
+          ? {
             OR: [
               { name: { contains: input.search } },
               {
@@ -557,211 +687,211 @@ export const albumRouter = createTRPCRouter({
               },
             ],
           }
-        : {}),
-        trackAlbum:{
-          some:{
-            track:{
-              ...input.genre.length>0?{
-                genre_track:{
-                  some:{
-                    genre:{
-                      slug:{
-                        in:input.genre
+          : {}),
+        trackAlbum: {
+          some: {
+            track: {
+              ...input.genre.length > 0 ? {
+                genre_track: {
+                  some: {
+                    genre: {
+                      slug: {
+                        in: input.genre
                       }
                     }
                   }
                 }
-              }:{},
-              ...input.tag.length>0?{
-                tag_track:{
-                  some:{
-                    tag:{
-                      slug:{
-                        in:input.tag
+              } : {},
+              ...input.tag.length > 0 ? {
+                tag_track: {
+                  some: {
+                    tag: {
+                      slug: {
+                        in: input.tag
                       }
                     }
                   }
                 }
-              }:{},
+              } : {},
             }
           }
         },
-        isActive:true
+        isActive: true
       }
       const count = await ctx.db.album.aggregate({
-        where:filter,
+        where: filter,
         _count: {
           id: true,
         },
       })
       const albums = await ctx.db.album.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [{ 
-            createdAt: input.sort === "desc" ? "desc" : "asc",
-          },],
-          where: filter,
-          select:{
-            id:true,
-            name:true,
-            artist:true,
-            price:true,
-            slug:true,
-            image:true,
-            user:{
-              select:{
-                id:true,
-                image:true,
-              }
-            },
-            _count:{
-              select:{
-                trackAlbum:true
-              }
+        take: input.take,
+        skip: input.skip,
+        orderBy: [{
+          createdAt: input.sort === "desc" ? "desc" : "asc",
+        },],
+        where: filter,
+        select: {
+          id: true,
+          name: true,
+          artist: true,
+          price: true,
+          slug: true,
+          image: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+            }
+          },
+          _count: {
+            select: {
+              trackAlbum: true
             }
           }
-        });
-
-        return {
-          count:count,
-          albums:albums
         }
+      });
+
+      return {
+        count: count,
+        albums: albums
+      }
     }),
 
-    getAllMainHome: publicProcedure
-  .input(
-    z.object({
-      search: z.string().nullish(),
-      sort: z.enum(["asc", "desc"]).default("desc"),
-      take: z.number().min(1).max(10).default(5),
-      cursor: z.string().nullish(), // 👈 IMPORTANT
-    })
-  )
-  .query(async ({ ctx, input }) => {
-    const take = input.take + 1
+  getAllMainHome: publicProcedure
+    .input(
+      z.object({
+        search: z.string().nullish(),
+        sort: z.enum(["asc", "desc"]).default("desc"),
+        take: z.number().min(1).max(10).default(5),
+        cursor: z.string().nullish(), // 👈 IMPORTANT
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const take = input.take + 1
 
-    const filter = {
-      isActive: true,
-      ...(input.search && {
-        name: {
-          contains: input.search,
+      const filter = {
+        isActive: true,
+        ...(input.search && {
+          name: {
+            contains: input.search,
+          },
+        }),
+      }
+
+      const albums = await ctx.db.album.findMany({
+        take,
+        cursor: input.cursor
+          ? { id: input.cursor }
+          : undefined,
+        orderBy: {
+          createdAt: input.sort,
         },
-      }),
-    }
-
-    const albums = await ctx.db.album.findMany({
-      take,
-      cursor: input.cursor
-        ? { id: input.cursor }
-        : undefined,
-      orderBy: {
-        createdAt: input.sort,
-      },
-      where: filter,
-      select: {
-        id: true,
-        name: true,
-        artist: true,
-        price: true,
-        slug: true,
-        image: true,
-        user: {
-          select: {
-            id: true,
-            image: true,
+        where: filter,
+        select: {
+          id: true,
+          name: true,
+          artist: true,
+          price: true,
+          slug: true,
+          image: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+            },
+          },
+          _count: {
+            select: {
+              trackAlbum: true,
+            },
           },
         },
-        _count: {
-          select: {
-            trackAlbum: true,
-          },
-        },
-      },
-    })
+      })
 
-    let nextCursor: string | undefined = undefined
+      let nextCursor: string | undefined = undefined
 
-    if (albums.length > input.take) {
-      const nextItem = albums.pop()
-      nextCursor = nextItem!.id
-    }
+      if (albums.length > input.take) {
+        const nextItem = albums.pop()
+        nextCursor = nextItem!.id
+      }
 
-    return {
-      albums,
-      nextCursor,
-    }
-  }),
+      return {
+        albums,
+        nextCursor,
+      }
+    }),
 
-    getAllMainEditor: publicProcedure
+  getAllMainEditor: publicProcedure
     .input(z.object({
-      search:z.string().nullish(), 
-      sort:z.string().default("desc"), 
+      search: z.string().nullish(),
+      sort: z.string().default("desc"),
       take: z.number().max(100),
       skip: z.number(),
-      editorId:z.string()
+      editorId: z.string()
     }))
-    .query(async({ ctx,input }) => {
+    .query(async ({ ctx, input }) => {
       const filter = {
-        name:{
-          contains:String(input.search)
+        name: {
+          contains: String(input.search)
         },
-        isActive:true,
-        user:{
-          id:input.editorId
+        isActive: true,
+        user: {
+          id: input.editorId
         }
       }
       const count = await ctx.db.album.aggregate({
-        where:filter,
+        where: filter,
         _count: {
           id: true,
         },
       })
       const albums = await ctx.db.album.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [{ 
-            createdAt: input.sort === "desc" ? "desc" : "asc",
-          },],
-          where: filter,
-          select:{
-            id:true,
-            name:true,
-            artist:true,
-            price:true,
-            slug:true,
-            image:true,
-            user:{
-              select:{
-                id:true,
-                image:true,
-              }
-            },
-            _count:{
-              select:{
-                trackAlbum:true
-              }
+        take: input.take,
+        skip: input.skip,
+        orderBy: [{
+          createdAt: input.sort === "desc" ? "desc" : "asc",
+        },],
+        where: filter,
+        select: {
+          id: true,
+          name: true,
+          artist: true,
+          price: true,
+          slug: true,
+          image: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+            }
+          },
+          _count: {
+            select: {
+              trackAlbum: true
             }
           }
-        });
-
-        return {
-          count:count,
-          albums:albums
         }
+      });
+
+      return {
+        count: count,
+        albums: albums
+      }
     }),
 
-    getAllFeatured: publicProcedure
-    .query(async({ ctx }) => {
+  getAllFeatured: publicProcedure
+    .query(async ({ ctx }) => {
       return await ctx.db.genre.findMany({
-        where:{
-          is_featured:true
+        where: {
+          is_featured: true
         },
-        select:{
-            id:true,
-            name:true,
+        select: {
+          id: true,
+          name: true,
         },
-        orderBy:{
-          name:'asc'
+        orderBy: {
+          name: 'asc'
         }
       })
     }),

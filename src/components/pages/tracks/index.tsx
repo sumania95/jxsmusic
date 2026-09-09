@@ -3,8 +3,6 @@ import { useAtom } from "jotai";
 import { defaultPageLimit, filterState } from "@/state/globalState";
 import { api } from "@/utils/api";
 import EmptyComponent from "../common/empty";
-import LoadingSkeletonComponents from "../common/loading-skeleton";
-import BannerTitleComponent from "@/components/common/banner-title";
 import {
   parseAsArrayOf,
   parseAsInteger,
@@ -25,10 +23,9 @@ import FilterFileTypeComponent from "@/components/common/filter-file";
 import TrackListHeader from "../common/track-header";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { LockKeyhole, TicketPercent } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import TrackColumnFilter, { useTrackColumns } from "../common/header-filter";
-import { formatCurrency, formatDateShort } from "@/lib/utils";
 import HeaderWithCouponBanner from "../home/coupon";
 import DataEnergyComponent from "@/components/common/filter-energy";
 import DataYearComponent from "@/components/common/filter-year";
@@ -66,178 +63,178 @@ const TracksComponent = () => {
     resetColumns,
   } = useTrackColumns()
   const itemSkeleton: number[] = Array.from(
-  { length: 20 },
-  (_, index) => index + 1,
-);
+    { length: 20 },
+    (_, index) => index + 1,
+  );
 
-const CURRENT_YEAR = new Date().getFullYear();
-const MINIMUM_YEAR = 1950;
+  const CURRENT_YEAR = new Date().getFullYear();
+  const MINIMUM_YEAR = 1950;
 
-const [defaultLimit] = useAtom(defaultPageLimit);
-const [state] = useAtom(filterState);
+  const [defaultLimit] = useAtom(defaultPageLimit);
+  const [state] = useAtom(filterState);
 
-const [genres] = useQueryState(
-  "genres",
-  parseAsArrayOf(parseAsString).withDefault([]),
-);
+  const [genres] = useQueryState(
+    "genres",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
 
-const [tags] = useQueryState(
-  "tags",
-  parseAsArrayOf(parseAsString).withDefault([]),
-);
+  const [tags] = useQueryState(
+    "tags",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
 
-const [selectedKeys] = useQueryState(
-  "key",
-  parseAsArrayOf(parseAsString).withDefault([]),
-);
+  const [selectedKeys] = useQueryState(
+    "key",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
 
-const [filetypes] = useQueryState(
-  "filetype",
-  parseAsArrayOf(
-    parseAsStringEnum(["audio", "video"]),
-  ).withDefault([]),
-);
+  const [filetypes] = useQueryState(
+    "filetype",
+    parseAsArrayOf(
+      parseAsStringEnum(["audio", "video"]),
+    ).withDefault([]),
+  );
 
-const [explicit] = useQueryState(
-  "explicit",
-  parseAsStringEnum([
-    "all",
-    "clean",
-    "dirty",
-  ]).withDefault("all"),
-);
+  const [explicit] = useQueryState(
+    "explicit",
+    parseAsStringEnum([
+      "all",
+      "clean",
+      "dirty",
+    ]).withDefault("all"),
+  );
 
-const [bpm] = useQueryState(
-  "bpm",
-  parseAsArrayOf(parseAsInteger).withDefault([
-    0,
-    200,
-  ]),
-);
+  const [bpm] = useQueryState(
+    "bpm",
+    parseAsArrayOf(parseAsInteger).withDefault([
+      0,
+      200,
+    ]),
+  );
 
-const [pager] = useQueryState(
-  "page",
-  parseAsInteger.withDefault(1),
-);
+  const [pager] = useQueryState(
+    "page",
+    parseAsInteger.withDefault(1),
+  );
 
-const [search] = useQueryState("search", {
-  defaultValue: "",
-});
-
-const [limit] = useQueryState(
-  "limit",
-  parseAsInteger.withDefault(defaultLimit),
-);
-
-const [selectedEnergy] = useQueryState(
-  "energy",
-  parseAsArrayOf(parseAsInteger).withDefault([]),
-);
-
-const [yearFrom] = useQueryState(
-  "yearFrom",
-  parseAsInteger.withDefault(MINIMUM_YEAR),
-);
-
-const [yearTo] = useQueryState(
-  "yearTo",
-  parseAsInteger.withDefault(CURRENT_YEAR),
-);
-
-/*
- * Sorting starts blank.
- * The table header writes these values when clicked.
- */
-const [sort] = useQueryState(
-  "sort",
-  parseAsStringEnum<TrackSortKey>(
-    SORTABLE_COLUMNS,
-  ),
-);
-
-const [sortOrder] = useQueryState(
-  "order",
-  parseAsStringEnum<TrackSortOrder>(
-    SORT_ORDERS,
-  ),
-);
-
-const energy =
-  selectedEnergy.length > 0
-    ? selectedEnergy
-    : undefined;
-
-const hasCustomYearRange =
-  yearFrom !== MINIMUM_YEAR ||
-  yearTo !== CURRENT_YEAR;
-
-const { data: credits } =
-  api.credits.balance.useQuery(undefined, {
-    enabled: Boolean(session?.user),
+  const [search] = useQueryState("search", {
+    defaultValue: "",
   });
 
-const {
-  data: track,
-  isLoading,
-} = api.track.getAllMainReleases.useQuery({
-  search,
-  genre: genres,
-  tag: tags,
-  key: selectedKeys,
+  const [limit] = useQueryState(
+    "limit",
+    parseAsInteger.withDefault(defaultLimit),
+  );
 
-  bpm_start: bpm[0],
-  bpm_end: bpm[1],
+  const [selectedEnergy] = useQueryState(
+    "energy",
+    parseAsArrayOf(parseAsInteger).withDefault([]),
+  );
 
-  skip: session?.user
-    ? Number(Number(pager) * limit - limit)
-    : 0,
+  const [yearFrom] = useQueryState(
+    "yearFrom",
+    parseAsInteger.withDefault(MINIMUM_YEAR),
+  );
 
-  take: session?.user
-    ? limit
-    : Math.min(limit, 20),
-
-  is_editor: false,
-  is_editor_id: null,
-  selectionFilter: state.selectionFilter,
-  filetypes,
-  explicit,
-
-  energy,
-
-  year_start: hasCustomYearRange
-    ? yearFrom
-    : undefined,
-
-  year_end: hasCustomYearRange
-    ? yearTo
-    : undefined,
+  const [yearTo] = useQueryState(
+    "yearTo",
+    parseAsInteger.withDefault(CURRENT_YEAR),
+  );
 
   /*
-   * Sorting is omitted until a column is clicked.
+   * Sorting starts blank.
+   * The table header writes these values when clicked.
    */
-  sort: sort ?? undefined,
+  const [sort] = useQueryState(
+    "sort",
+    parseAsStringEnum<TrackSortKey>(
+      SORTABLE_COLUMNS,
+    ),
+  );
 
-  sort_order: sort
-    ? (sortOrder ?? "asc")
-    : undefined,
-},{
+  const [sortOrder] = useQueryState(
+    "order",
+    parseAsStringEnum<TrackSortOrder>(
+      SORT_ORDERS,
+    ),
+  );
+
+  const energy =
+    selectedEnergy.length > 0
+      ? selectedEnergy
+      : undefined;
+
+  const hasCustomYearRange =
+    yearFrom !== MINIMUM_YEAR ||
+    yearTo !== CURRENT_YEAR;
+
+  const { data: credits } =
+    api.credits.balance.useQuery(undefined, {
+      enabled: Boolean(session?.user),
+    });
+
+  const {
+    data: track,
+    isLoading,
+  } = api.track.getAllMainReleases.useQuery({
+    search,
+    genre: genres,
+    tag: tags,
+    key: selectedKeys,
+
+    bpm_start: bpm[0],
+    bpm_end: bpm[1],
+
+    skip: session?.user
+      ? Number(Number(pager) * limit - limit)
+      : 0,
+
+    take: session?.user
+      ? limit
+      : Math.min(limit, 20),
+
+    is_editor: false,
+    is_editor_id: null,
+    selectionFilter: state.selectionFilter,
+    filetypes,
+    explicit,
+
+    energy,
+
+    year_start: hasCustomYearRange
+      ? yearFrom
+      : undefined,
+
+    year_end: hasCustomYearRange
+      ? yearTo
+      : undefined,
+
+    /*
+     * Sorting is omitted until a column is clicked.
+     */
+    sort: sort ?? undefined,
+
+    sort_order: sort
+      ? (sortOrder ?? "asc")
+      : undefined,
+  }, {
     placeholderData: (previousData) =>
       previousData,
   },);
 
-const page = Number(pager) || 1;
-const total =
-  Number(track?.count._count.id) || 0;
+  const page = Number(pager) || 1;
+  const total =
+    Number(track?.count._count.id) || 0;
 
-const start =
-  total === 0
-    ? 0
-    : (page - 1) * limit + 1;
+  const start =
+    total === 0
+      ? 0
+      : (page - 1) * limit + 1;
 
-const end = Math.min(
-  page * limit,
-  total,
-);
+  const end = Math.min(
+    page * limit,
+    total,
+  );
   return (
     <>
       <ProfileMeta title="New Releases" description="Collection of DJ Music" />

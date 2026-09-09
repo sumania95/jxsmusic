@@ -281,7 +281,7 @@ const ProfileComponent = () => {
                 onSelect={() => navigate("/restricted/admin")}
               />
             )}
-            {isSuperAdmin && (
+            {/* {isSuperAdmin && (
               <MenuRow
                 icon={MessageCircleCode}
                 label="Marketing"
@@ -289,7 +289,7 @@ const ProfileComponent = () => {
                 active={router.pathname.startsWith("/restricted/marketing")}
                 onSelect={() => navigate("/restricted/marketing")}
               />
-            )}
+            )} */}
           </div>
         )}
 

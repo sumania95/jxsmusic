@@ -10,12 +10,7 @@ import {
 } from "lucide-react";
 import * as Yup from "yup";
 import { useRouter } from "next/router";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { toast } from "sonner";
 import { ImageDropzone } from "@/components/common/dropzone-cover-image";
 import {
@@ -390,49 +385,6 @@ const AlbumCreateForm = () => {
           "
         >
           {/* =================================================
-              COVER NOTICE
-          ================================================= */}
-          <Alert
-            variant="warning"
-            className="
-              rounded-2xl
-              border-[#B9FF00]/15
-              bg-[#B9FF00]/[0.035]
-              text-zinc-400
-            "
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className="
-                  flex
-                  h-8
-                  w-8
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-[#B9FF00]/10
-                  text-[#B9FF00]
-                "
-              >
-                <ImageIcon className="h-4 w-4" />
-              </div>
-
-              <AlertTitle
-                className="
-                  text-xs
-                  font-medium
-                  leading-6
-                  text-zinc-400
-                "
-              >
-                {`Dont have album cover Image? Just prompt in ChatGPT "Create a cover image (about your album info)"`}.
-              </AlertTitle>
-            </div>
-          </Alert>
-
-
-          {/* =================================================
               COVER IMAGE
           ================================================= */}
           <div
@@ -699,123 +651,8 @@ const AlbumCreateForm = () => {
       {/* =====================================================
           TRACKS
       ===================================================== */}
-      <section
-        className="
-          relative
-          overflow-hidden
-          rounded-3xl
-          border
-          border-white/10
-          bg-white/[0.025]
-        "
-      >
         {/* Ambient Glow */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            left-[-160px]
-            top-[-180px]
-            h-[360px]
-            w-[360px]
-            rounded-full
-            bg-[#B9FF00]/[0.025]
-            blur-[110px]
-          "
-        />
-
-
-        {/* TRACK HEADER */}
-        <div
-          className="
-            relative
-            flex
-            items-center
-            justify-between
-            gap-4
-            border-b
-            border-white/[0.06]
-            px-5
-            py-5
-            sm:px-6
-          "
-        >
-          <div>
-            <div className="flex items-center gap-2">
-              <span
-                className="
-                  h-1.5
-                  w-1.5
-                  rounded-full
-                  bg-[#B9FF00]
-                  shadow-[0_0_8px_rgba(185,255,0,0.7)]
-                "
-              />
-
-              <h2
-                className="
-                  text-sm
-                  font-semibold
-                  text-zinc-200
-                "
-              >
-                Album Tracks
-              </h2>
-            </div>
-
-            <p
-              className="
-                mt-1
-                text-[9px]
-                uppercase
-                tracking-[0.13em]
-                text-zinc-600
-              "
-            >
-              Select 10 to 150 tracks
-            </p>
-          </div>
-
-
-          <span
-            className={`
-              rounded-full
-              border
-              px-3
-              py-1
-              text-[10px]
-              font-medium
-              ${
-                values.tracks.length >= 10 &&
-                values.tracks.length <= 150
-                  ? `
-                      border-[#B9FF00]/15
-                      bg-[#B9FF00]/[0.05]
-                      text-[#B9FF00]
-                    `
-                  : `
-                      border-white/[0.07]
-                      bg-white/[0.025]
-                      text-zinc-500
-                    `
-              }
-            `}
-          >
-            {values.tracks.length}
-            /150
-          </span>
-        </div>
-
-
-        {/* TRACK SELECTOR */}
-        <div
-          className="
-            relative
-            p-3
-            sm:p-4
-          "
-        >
-          <AlbumTrackSelector
+       <AlbumTrackSelector
             value={
               values.tracks
             }
@@ -834,8 +671,6 @@ const AlbumCreateForm = () => {
               )
             }
           />
-        </div>
-      </section>
 
 
       {/* =====================================================

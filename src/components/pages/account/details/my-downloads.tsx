@@ -495,17 +495,18 @@ const MyDownloadsComponents = () => {
                                 {track.artist ?? "Unknown artist"}
                             </p>
                             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-zinc-500">
-                                {track.filetype?.toLowerCase().includes("audio") && (
-                                    <span className="rounded-full border border-[#B9FF00]/20 bg-[#B9FF00]/10 px-2 py-0.5 text-[#B9FF00]">
-                                    Audio
-                                    </span>
-                                )}
-
-                                {track.filetype?.toLowerCase().includes("video") && (
-                                    <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-violet-300">
-                                    Video
-                                    </span>
-                                )}
+                               <span
+                                className={`
+                                  rounded-full border px-2 py-1
+                                  text-[9px] font-semibold uppercase tracking-wider
+                                  ${track.filetype?.toLowerCase().includes("video")
+                                    ? "border-pink-400/20 bg-pink-400/10 text-pink-300"
+                                    : "border-[#B9FF00]/20 bg-[#B9FF00]/10 text-yellow-100"
+                                  }
+                                `}
+                              >
+                                {track.filetype?.toLowerCase().includes("video") ? "Video" : "Audio"}
+                              </span>
 
                                 <span>{track.bpm_start} BPM</span>
                                 <span aria-hidden="true">•</span>

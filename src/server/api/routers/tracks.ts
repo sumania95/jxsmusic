@@ -20,8 +20,8 @@ import contentDisposition from "content-disposition";
 import type { Prisma } from "generated/prisma";
 
 interface Metadata {
-  data:{
-    metadata?:{
+  data: {
+    metadata?: {
       file_duration?: number;
       title?: string;
       artist?: string;
@@ -33,7 +33,7 @@ interface Metadata {
     }
   }
 }
-const Initial =  "https://d2v08wdwrbjeru.cloudfront.net"
+const Initial = "https://d2v08wdwrbjeru.cloudfront.net"
 
 const MAX_ARTWORK_SIZE = 300 * 1024; // 300 KB
 const CURRENT_YEAR = new Date().getFullYear();
@@ -49,12 +49,12 @@ async function loadAndProcessArtwork(
     try {
       const inputBuffer = url.startsWith("http")
         ? Buffer.from(
-            (
-              await axios.get(url, {
-                responseType: "arraybuffer",
-              })
-            ).data,
-          )
+          (
+            await axios.get(url, {
+              responseType: "arraybuffer",
+            })
+          ).data,
+        )
         : fs.readFileSync(path.resolve(url));
 
       const pipeline = sharp(inputBuffer).resize(1000, 1000, {
@@ -171,225 +171,225 @@ function getEndOfDay(date = new Date()) {
 export const trackRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({
-        bucketName:z.string(), 
-        key: z.string(),
-        size: z.number(),
-        fileType: z.string(),
-        fileName: z.string(),
-        id: z.string(),
+      bucketName: z.string(),
+      key: z.string(),
+      size: z.number(),
+      fileType: z.string(),
+      fileName: z.string(),
+      id: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-        // simulate a slow db call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const { s3 } = ctx
-        const {key,fileName,size} = input
-        const s3Configuration = new S3Client(s3);
-        console.log("starting")
-        const urlS3 = `${Initial}/${key}`
-        try {
-          const data:Metadata = await axios.post(`${env.MEDIA_CUTTER_URL}/api/cutter/new-pool-get-info-reximer-with-key`,{
-            data:{
-                url_s3: String(urlS3),
-            }
-          })
-          console.log(input.fileName)
-          const initialIsExplicit = input.fileName.includes("[DIRTY]")
-          ? true
-          : input.fileName.includes("[CLEAN]")
-          ? false
-          : false; // fallback to existing field
-          const genreMap = await ctx.db.genre.findMany({
-            where:{
-              name:{
-                in:data.data.metadata?.genre?.split(' - ')
-              }
-            },
-            select:{
-              id:true
-            }
-          })
-          const genre = genreMap.map((as)=>({
-            genreId:as.id
-          }))
-          const tagMap = await ctx.db.tag.findMany({
-            where:{
-              name:{
-                in:data.data.metadata?.comment?.split(' ')
-              }
-            },
-            select:{
-              id:true
-            }
-          })
-          const tag = tagMap.map((as)=>({
-            tagId:as.id
-          }))
-          const title = data.data.metadata?.title?.trim()?data.data.metadata?.title?.trim(): fileName.replace(/\.[^/.]+$/, "").trim();
-          const artist = data.data.metadata?.artist?.trim();
-          return await ctx.db.track.create({
-              data:{
-                  title,
-                  artist,
-                  description:String(data.data.metadata?.genre),
-                  in_key:convertToCamelot(String(data.data.metadata?.key)),
-                  is_explicit:initialIsExplicit,
-                  bpm_start:Number(data.data.metadata?.bpm),
-                  bpm_end:Number(data.data.metadata?.bpm),
-                  release_year:Number(data.data.metadata?.year??new Date().getFullYear()),
-                  filename:fileName,
-                  // ✅ RELATION FIX
-                  genre_track: genre.length
-                  ? {
-                      createMany: {
-                        data: genre,
-                        skipDuplicates: true,
-                      },
-                    }
-                  : undefined,
-                  tag_track: tag.length
-                  ? {
-                      createMany: {
-                        data: tag,
-                        skipDuplicates: true,
-                      },
-                    }
-                  : undefined,
-                  filetype:input.fileType,
-                  download_key:key,
-                  size:size,
-                  duration:Number(data.data.metadata?.file_duration),
-                  releaseAt:new Date(),
-                  userId:ctx.session.user.id
-              },
-              select: {
-                id: true,
-                download_key: true,
-                title: true,
-                artist: true,
-                filename: true,
-                description: true,
-                duration: true,
-                bpm_start: true,
-                bpm_end: true,
-                in_key: true,
-                releaseAt: true,
-              },
-          })
-        } catch (error) {
-          console.log(error)
-          const params = {
-            Bucket: input.bucketName,
-            Key: input.key,
-          };
-        
-          try {
-            await s3Configuration.send(new DeleteObjectCommand(params));
-          } catch (error) {
-            console.log(`Error deleting ${input.key} from ${input.bucketName}`, error);
-          }
-          
-          if (error instanceof PrismaClientKnownRequestError) {
-            switch (error.code) {
-              case 'P2002':
-                console.log('Duplicate track already exists.', error.message);
-                throw new TRPCError({ 
-                  code: 'CONFLICT', 
-                  message: JSON.stringify({ id: input.id, originalError: error.message }),
-                });
-
-              default:
-                console.log('A known request error occurred:', error.message);
-                throw new TRPCError({ 
-                  code: 'BAD_REQUEST', 
-                  message: JSON.stringify({ id: input.id, originalError: error.message }),
-                });
-            }
-          }
-
-          console.log('An unknown error occurred:', error);
-          throw new TRPCError({ 
-            code: 'BAD_REQUEST', 
-            message: JSON.stringify({ id: input.id, originalError: (error as Error).message }),
-          });
-
-
-          
-        }
-        
-        
-    }),
-    delete: protectedProcedure
-    .input(z.object({
-      id:z.string(),
-      key:z.string(),
-      bucketName:z.string(),
-      exist:z.boolean()
-
-    }))
-    .mutation(async({ ctx , input }) => {
-        const s3Configuration = new S3Client(ctx.s3);
-        if(input.exist){
-          const params = {
-            Bucket: input.bucketName,
-            Key: input.key,
-          };
-        
-          try {
-            await s3Configuration.send(new DeleteObjectCommand(params));
-          } catch (error) {
-            console.log(`Error deleting ${input.key} from ${input.bucketName}`, error);
-          }
-
-        }
-        return await ctx.db.track.delete({
-          where: { 
-            id: input.id
-          },
-        });
-    }),
-
-    deleteAdmin: protectedProcedure
-    .input(z.object({
-      id:z.string(),
-    }))
-    .mutation(async({ ctx , input }) => {
-        const s3Configuration = new S3Client(ctx.s3);
-        const track = await ctx.db.track.findUnique({
-          where:{
-            id:input.id
+      // simulate a slow db call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { s3 } = ctx
+      const { key, fileName, size } = input
+      const s3Configuration = new S3Client(s3);
+      console.log("starting")
+      const urlS3 = `${Initial}/${key}`
+      try {
+        const data: Metadata = await axios.post(`${env.MEDIA_CUTTER_URL}/api/cutter/new-pool-get-info-reximer-with-key`, {
+          data: {
+            url_s3: String(urlS3),
           }
         })
-        const bucketName = `jxs-music`
+        console.log(input.fileName)
+        const initialIsExplicit = input.fileName.includes("[DIRTY]")
+          ? true
+          : input.fileName.includes("[CLEAN]")
+            ? false
+            : false; // fallback to existing field
+        const genreMap = await ctx.db.genre.findMany({
+          where: {
+            name: {
+              in: data.data.metadata?.genre?.split(' - ')
+            }
+          },
+          select: {
+            id: true
+          }
+        })
+        const genre = genreMap.map((as) => ({
+          genreId: as.id
+        }))
+        const tagMap = await ctx.db.tag.findMany({
+          where: {
+            name: {
+              in: data.data.metadata?.comment?.split(' ')
+            }
+          },
+          select: {
+            id: true
+          }
+        })
+        const tag = tagMap.map((as) => ({
+          tagId: as.id
+        }))
+        const title = data.data.metadata?.title?.trim() ? data.data.metadata?.title?.trim() : fileName.replace(/\.[^/.]+$/, "").trim();
+        const artist = data.data.metadata?.artist?.trim();
+        return await ctx.db.track.create({
+          data: {
+            title,
+            artist,
+            description: String(data.data.metadata?.genre),
+            in_key: convertToCamelot(String(data.data.metadata?.key)),
+            is_explicit: initialIsExplicit,
+            bpm_start: Number(data.data.metadata?.bpm),
+            bpm_end: Number(data.data.metadata?.bpm),
+            release_year: Number(data.data.metadata?.year ?? new Date().getFullYear()),
+            filename: fileName,
+            // ✅ RELATION FIX
+            genre_track: genre.length
+              ? {
+                createMany: {
+                  data: genre,
+                  skipDuplicates: true,
+                },
+              }
+              : undefined,
+            tag_track: tag.length
+              ? {
+                createMany: {
+                  data: tag,
+                  skipDuplicates: true,
+                },
+              }
+              : undefined,
+            filetype: input.fileType,
+            download_key: key,
+            size: size,
+            duration: Number(data.data.metadata?.file_duration),
+            releaseAt: new Date(),
+            userId: ctx.session.user.id
+          },
+          select: {
+            id: true,
+            download_key: true,
+            title: true,
+            artist: true,
+            filename: true,
+            description: true,
+            duration: true,
+            bpm_start: true,
+            bpm_end: true,
+            in_key: true,
+            releaseAt: true,
+          },
+        })
+      } catch (error) {
+        console.log(error)
         const params = {
-            Bucket: bucketName,
-            Key: String(track?.download_key),
+          Bucket: input.bucketName,
+          Key: input.key,
         };
-        const paramsPreview = {
-            Bucket: bucketName,
-            Key: String(track?.preview_key),
-        };
-        
+
         try {
           await s3Configuration.send(new DeleteObjectCommand(params));
-          console.log('deleted initital')
         } catch (error) {
-          console.log(`Error deleting ${String(track?.download_key)} from ${bucketName}`, error);
+          console.log(`Error deleting ${input.key} from ${input.bucketName}`, error);
         }
-        try {
-          await s3Configuration.send(new DeleteObjectCommand(paramsPreview));
-          console.log('deleted preview')
 
-        } catch (error) {
-          console.log(`Error deleting ${String(track?.preview_key)} from ${bucketName}`, error);
+        if (error instanceof PrismaClientKnownRequestError) {
+          switch (error.code) {
+            case 'P2002':
+              console.log('Duplicate track already exists.', error.message);
+              throw new TRPCError({
+                code: 'CONFLICT',
+                message: JSON.stringify({ id: input.id, originalError: error.message }),
+              });
+
+            default:
+              console.log('A known request error occurred:', error.message);
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: JSON.stringify({ id: input.id, originalError: error.message }),
+              });
+          }
         }
-        return await ctx.db.track.delete({
-          where: { 
-            id: input.id
-          },
+
+        console.log('An unknown error occurred:', error);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: JSON.stringify({ id: input.id, originalError: (error as Error).message }),
         });
+
+
+
+      }
+
+
     }),
-  
-    updateReleases: protectedProcedure
+  delete: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      key: z.string(),
+      bucketName: z.string(),
+      exist: z.boolean()
+
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const s3Configuration = new S3Client(ctx.s3);
+      if (input.exist) {
+        const params = {
+          Bucket: input.bucketName,
+          Key: input.key,
+        };
+
+        try {
+          await s3Configuration.send(new DeleteObjectCommand(params));
+        } catch (error) {
+          console.log(`Error deleting ${input.key} from ${input.bucketName}`, error);
+        }
+
+      }
+      return await ctx.db.track.delete({
+        where: {
+          id: input.id
+        },
+      });
+    }),
+
+  deleteAdmin: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const s3Configuration = new S3Client(ctx.s3);
+      const track = await ctx.db.track.findUnique({
+        where: {
+          id: input.id
+        }
+      })
+      const bucketName = `jxs-music`
+      const params = {
+        Bucket: bucketName,
+        Key: String(track?.download_key),
+      };
+      const paramsPreview = {
+        Bucket: bucketName,
+        Key: String(track?.preview_key),
+      };
+
+      try {
+        await s3Configuration.send(new DeleteObjectCommand(params));
+        console.log('deleted initital')
+      } catch (error) {
+        console.log(`Error deleting ${String(track?.download_key)} from ${bucketName}`, error);
+      }
+      try {
+        await s3Configuration.send(new DeleteObjectCommand(paramsPreview));
+        console.log('deleted preview')
+
+      } catch (error) {
+        console.log(`Error deleting ${String(track?.preview_key)} from ${bucketName}`, error);
+      }
+      return await ctx.db.track.delete({
+        where: {
+          id: input.id
+        },
+      });
+    }),
+
+  updateReleases: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -419,8 +419,8 @@ export const trackRouter = createTRPCRouter({
             })
           )
           .optional(),
-        is_published:z.boolean(),
-        enabledSnippet:z.boolean(),
+        is_published: z.boolean(),
+        enabledSnippet: z.boolean(),
         audioBitrate: z.string(),
       })
     )
@@ -428,11 +428,11 @@ export const trackRouter = createTRPCRouter({
       const s3Configuration = new S3Client(ctx.s3);
       // CREATE SNIPPIT
       const track = await ctx.db.track.findUnique({
-        where:{
-          id:input.id
+        where: {
+          id: input.id
         },
         select: {
-          id:true,
+          id: true,
           artist: true,
           title: true,
           bpm_start: true,
@@ -468,9 +468,9 @@ export const trackRouter = createTRPCRouter({
           },
         },
       })
-      if(!track) throw new TRPCError({
-        code:"NOT_FOUND",
-        message:"Update Track Not Found"
+      if (!track) throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Update Track Not Found"
       })
       // 🚫 DAILY UPLOAD LIMIT (10 published tracks per day per user)
       if (input.is_published) {
@@ -497,9 +497,8 @@ export const trackRouter = createTRPCRouter({
 
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: `Daily upload limit reached (${DAILY_LIMIT}/day). Try again in ${
-              hours > 0 ? `${hours}h ` : ""
-            }${minutes}m.`,
+            message: `Daily upload limit reached (${DAILY_LIMIT}/day). Try again in ${hours > 0 ? `${hours}h ` : ""
+              }${minutes}m.`,
           });
         }
       }
@@ -509,38 +508,38 @@ export const trackRouter = createTRPCRouter({
       const previewMime = isVideo ? "video/mp4" : "audio/mpeg"
       const bucketName = `jxs-music`
       const formattedTitle = formatTrackTitle(input.title, input.is_explicit);
-      
+
       const filename =
         `${track.artist} - ${formattedTitle} ` +
         `${track.in_key} ${track.bpm_start}.${previewExtension}`;
-      const preview_key = isVideo?`jxs/video/preview/${input.id}.${previewExtension}`:`jxs/preview/${input.id}.${previewExtension}`
+      const preview_key = isVideo ? `jxs/video/preview/${input.id}.${previewExtension}` : `jxs/preview/${input.id}.${previewExtension}`
       const url = `${Initial}/${track.download_key}`
       console.log('starting api')
       if (input.enabledSnippet) {
         try {
-            await axios.post(`${env.MEDIA_CUTTER_URL}/api/cutter/new-pool-reximer-aws`,{
-                data:{
-                    url_s3: String(url),
-                    id: String(input.id),
-                    upload_path: preview_key,
-                    content_type: previewMime,
-                    start: String(input.regionTime.start),
-                    end: String(input.regionTime.end),
-                    audioBitrate:input.audioBitrate,
-                    extension_file: previewExtension,
-                    S3_ACCESS_ID:env.S3_ACCESS_ID,
-                    S3_SECRET_KEY:env.S3_SECRET_KEY,
-                    S3_BUCKET_NAME:bucketName,
-                    S3_REGION:"ap-southeast-1"
-                }
-              })
+          await axios.post(`${env.MEDIA_CUTTER_URL}/api/cutter/new-pool-reximer-aws`, {
+            data: {
+              url_s3: String(url),
+              id: String(input.id),
+              upload_path: preview_key,
+              content_type: previewMime,
+              start: String(input.regionTime.start),
+              end: String(input.regionTime.end),
+              audioBitrate: input.audioBitrate,
+              extension_file: previewExtension,
+              S3_ACCESS_ID: env.S3_ACCESS_ID,
+              S3_SECRET_KEY: env.S3_SECRET_KEY,
+              S3_BUCKET_NAME: bucketName,
+              S3_REGION: "ap-southeast-1"
+            }
+          })
         } catch (error) {
-            console.log(error)
-            throw new TRPCError({
-              code:"INTERNAL_SERVER_ERROR",
-              message:"Snippet File Creation Failed."
-            })
-            
+          console.log(error)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Snippet File Creation Failed."
+          })
+
         }
       }
       // Delete existing genre tracks
@@ -564,7 +563,7 @@ export const trackRouter = createTRPCRouter({
         select: { name: true },
       });
       // Generate keywords
-      const keywords = `${input.artist} - ${formatTrackTitle(input.title,input.is_explicit)} ${input.in_key} ${input.bpm_start}-${input.bpm_end} ${input.artist} ${formatTrackTitle(input.title,input.is_explicit)} ${input.in_key} ${input.bpm_start}-${input.bpm_end} ${input.title} - ${input.artist} ${input.title} ${input.artist}`;
+      const keywords = `${input.artist} - ${formatTrackTitle(input.title, input.is_explicit)} ${input.in_key} ${input.bpm_start}-${input.bpm_end} ${input.artist} ${formatTrackTitle(input.title, input.is_explicit)} ${input.in_key} ${input.bpm_start}-${input.bpm_end} ${input.title} - ${input.artist} ${input.title} ${input.artist}`;
       if (isVideo) {
         const updatedTrack = await ctx.db.track.update({
           where: { id: input.id },
@@ -594,10 +593,10 @@ export const trackRouter = createTRPCRouter({
                 skipDuplicates: true,
               },
             },
-            ...input.is_published?{
-              releaseAt:new Date(),
+            ...input.is_published ? {
+              releaseAt: new Date(),
               preview_key: preview_key,
-            }:{},
+            } : {},
             is_published: true,
             is_reviewed: true,
           },
@@ -628,39 +627,39 @@ export const trackRouter = createTRPCRouter({
         return updatedTrack;
       }
       const response = await axios.get<ArrayBuffer>(url, {
-          responseType: "arraybuffer",
-          onDownloadProgress: ({ loaded, total }) => {
-            console.log("track",`${input.artist} - ${input.title}`,Math.floor((Number(loaded) * 100) / Number(total)))
-          },
-        });
-      const artwork = await loadAndProcessArtwork(["https://jxsmusic.com/images/track-logo.png","https://jxsmusic.eta.vercel.app/images/track-logo.png",localArtwork,"http://localhost:3000/images/track-logo.png"]);
+        responseType: "arraybuffer",
+        onDownloadProgress: ({ loaded, total }) => {
+          console.log("track", `${input.artist} - ${input.title}`, Math.floor((Number(loaded) * 100) / Number(total)))
+        },
+      });
+      const artwork = await loadAndProcessArtwork(["https://jxsmusic.com/images/track-logo.png", "https://jxsmusic.eta.vercel.app/images/track-logo.png", localArtwork, "http://localhost:3000/images/track-logo.png"]);
       const updatedTags = {
-          title: formattedTitle,
-          artist: String(track.artist),
-          bpm: String(track.bpm_start),
-          initialKey: String(track.in_key),
-          year: String(track.release_year),
-          album: "JXSMUSIC.COM",
-          encodedBy:"JXSMUSIC.COM",
-          remixArtist:"Jeff92 & Ayan Sumania",
-          genre:genres.length ? genres.map(g => g.name).join(' / ') : 'Others',
-          comment: {
-            language: "eng",
-            text:
-              `${input.in_key} - Energy ${input.energy} ${tags.length ? tags.map(t => t.name).join(' ') : '#Others'}`,
-          },
-          image: artwork
-            ? {
-                mime: artwork.mime,
-                type: {
-                  id: 3,
-                  name: "front cover",
-                },
-                description: "Artwork",
-                imageBuffer: artwork.buffer,
-              }
-            : undefined,
-        };
+        title: formattedTitle,
+        artist: String(track.artist),
+        bpm: String(track.bpm_start),
+        initialKey: String(track.in_key),
+        year: String(track.release_year),
+        album: "JXSMUSIC.COM",
+        encodedBy: "JXSMUSIC.COM",
+        remixArtist: "Jeff92 & Ayan Sumania",
+        genre: genres.length ? genres.map(g => g.name).join(' / ') : 'Others',
+        comment: {
+          language: "eng",
+          text:
+            `${input.in_key} - Energy ${input.energy} ${tags.length ? tags.map(t => t.name).join(' ') : '#Others'}`,
+        },
+        image: artwork
+          ? {
+            mime: artwork.mime,
+            type: {
+              id: 3,
+              name: "front cover",
+            },
+            description: "Artwork",
+            imageBuffer: artwork.buffer,
+          }
+          : undefined,
+      };
 
       console.log("====begin tagging====");
       const taggedData = NodeID3.write(
@@ -668,8 +667,8 @@ export const trackRouter = createTRPCRouter({
         Buffer.from(response.data),
       );
       const id =
-                globalThis.crypto?.randomUUID?.() ??
-                `${Date.now()}-${Math.random()}`
+        globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random()}`
       const newDownloadKey = `jxs/download/${id}.${previewExtension}`
       const upload = async (disposition: string): Promise<void> => {
         await s3Configuration.send(
@@ -694,8 +693,8 @@ export const trackRouter = createTRPCRouter({
         await upload(buildContentDisposition(filename));
       }
       const params = {
-          Bucket: bucketName,
-          Key: String(track.download_key),
+        Bucket: bucketName,
+        Key: String(track.download_key),
       };
       try {
         await s3Configuration.send(new DeleteObjectCommand(params));
@@ -731,11 +730,11 @@ export const trackRouter = createTRPCRouter({
               skipDuplicates: true,
             },
           },
-          ...input.is_published?{
-            releaseAt:new Date(),
+          ...input.is_published ? {
+            releaseAt: new Date(),
             preview_key: preview_key,
-          }:{},
-          download_key:newDownloadKey,
+          } : {},
+          download_key: newDownloadKey,
           is_published: true,
           is_reviewed: true,
         },
@@ -767,553 +766,304 @@ export const trackRouter = createTRPCRouter({
       return updatedTrack;
     }),
 
-    getIdUpdate: protectedProcedure
+  getIdUpdate: protectedProcedure
     .input(z.object({
-      id:z.string(), 
+      id: z.string(),
     }))
-    .query(async({ ctx , input }) => {
+    .query(async ({ ctx, input }) => {
 
-        return await ctx.db.track.findUnique({
-          where: { 
-            id: input.id,
-            userId:ctx.session.user.id
+      return await ctx.db.track.findUnique({
+        where: {
+          id: input.id,
+          userId: ctx.session.user.id
+        },
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          description: true,
+          filename: true,
+          bpm_start: true,
+          bpm_end: true,
+          energy: true,
+          release_year: true,
+          in_key: true,
+          is_explicit: true,
+          is_opm: true,
+          is_exclusive: true,
+          download_key: true,
+          price: true,
+          loopLength: true,
+          regionTime: true,
+          genre_track: {
+            select: {
+              genreId: true,
+            }
           },
-          select:{
-            id:true,
-            title:true,
-            artist:true,
-            description:true,
-            filename:true,
-            bpm_start:true,
-            bpm_end:true,
-            energy:true,
-            release_year:true,
-            in_key:true,
-            is_explicit:true,
-            is_opm:true,
-            is_exclusive:true,
-            download_key:true,
-            price:true,
-            loopLength:true,
-            regionTime:true,
-            genre_track:{
-              select:{
-                genreId:true,
-              }
-            },
-            tag_track:{
-              select:{
-                tagId:true,
-              }
-            },
-            spotify_track:{
-              select:{
-                spotify:{
-                  select:{
-                    id:true,
-                    name:true,
-                    artists:true,
-                    spotifyId:true,
-                    spotifyUrl:true,
-                    previewUrl:true
-                  }
+          tag_track: {
+            select: {
+              tagId: true,
+            }
+          },
+          spotify_track: {
+            select: {
+              spotify: {
+                select: {
+                  id: true,
+                  name: true,
+                  artists: true,
+                  spotifyId: true,
+                  spotifyUrl: true,
+                  previewUrl: true
                 }
               }
             }
           }
-        });
+        }
+      });
     }),
-    getAllUploaded: protectedProcedure
+  getAllUploaded: protectedProcedure
     .input(z.object({
-      search:z.string().nullish(), 
-      genre:z.array(z.string()),
-      key:z.array(z.string()), 
-      bpm_start:z.number().min(0).max(200).default(0),
-      bpm_end:z.number().min(0).max(200).default(200), 
+      search: z.string().nullish(),
+      genre: z.array(z.string()),
+      key: z.array(z.string()),
+      bpm_start: z.number().min(0).max(200).default(0),
+      bpm_end: z.number().min(0).max(200).default(200),
       take: z.number().max(100),
       skip: z.number(),
     }))
-    .query(async({ ctx,input }) => {
+    .query(async ({ ctx, input }) => {
       const filter = {
-        is_published:false,
-        is_reviewed:false,
-        is_disabled:false,
-        userId:ctx.session.user.id,
-        duration:{
-          lte:600
+        is_published: false,
+        is_reviewed: false,
+        is_disabled: false,
+        userId: ctx.session.user.id,
+        duration: {
+          lte: 600
         },
       }
       const count = await ctx.db.track.aggregate({
-        where:filter,
+        where: filter,
         _count: {
           id: true,
         },
       })
       const tracks = await ctx.db.track.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [
-            { filename: "asc" },
-            { is_explicit: "asc" },
-            { releaseAt: "desc" },
-            { title: "asc" },
-          ],
-          where: filter,
-          select:{
-            id:true,
-            download_key:true,
-            title:true,
-            artist:true,
-            in_key:true,
-            description:true,
-            filename:true,
-            duration:true,
-            bpm_start:true,
-            bpm_end:true,
-            releaseAt:true,
-          }
-        });
-
-        return {
-          count:count,
-          tracks:tracks
+        take: input.take,
+        skip: input.skip,
+        orderBy: [
+          { filename: "asc" },
+          { is_explicit: "asc" },
+          { releaseAt: "desc" },
+          { title: "asc" },
+        ],
+        where: filter,
+        select: {
+          id: true,
+          download_key: true,
+          title: true,
+          artist: true,
+          in_key: true,
+          description: true,
+          filename: true,
+          duration: true,
+          bpm_start: true,
+          bpm_end: true,
+          releaseAt: true,
         }
+      });
+
+      return {
+        count: count,
+        tracks: tracks
+      }
     }),
-    getAllReleases: protectedProcedure
+  getAllReleases: protectedProcedure
     .input(z.object({
-      search:z.string().nullish(), 
-      genre:z.array(z.string()),
-      tag:z.array(z.string()),
-      key:z.array(z.string()), 
-      bpm_start:z.number().min(0).max(200).default(0),
-      bpm_end:z.number().min(0).max(200).default(200), 
+      search: z.string().nullish(),
+      genre: z.array(z.string()),
+      tag: z.array(z.string()),
+      key: z.array(z.string()),
+      bpm_start: z.number().min(0).max(200).default(0),
+      bpm_end: z.number().min(0).max(200).default(200),
       take: z.number().max(100),
       skip: z.number(),
-      is_editor:z.boolean(),
+      is_editor: z.boolean(),
       filetypes: z.array(z.string()).optional(),
       explicit: z.enum(["all", "clean", "dirty"]).default("all"),
-    }))
-    .query(async({ ctx,input }) => {
+      // Mixed In Key energy levels.
+      energy: z
+        .array(
+          z
+            .number()
+            .int()
+            .min(1)
+            .max(10),
+        )
+        .optional(),
+
+      // Release-year range.
+      year_start: z
+        .number()
+        .int()
+        .min(1950)
+        .max(CURRENT_YEAR)
+        .optional(),
+
+      year_end: z
+        .number()
+        .int()
+        .min(1950)
+        .max(CURRENT_YEAR)
+        .optional(),
+
+      // Optional sorting.
+      sort: z
+        .enum([
+          "track",
+          "key",
+          "bpm",
+          "energy",
+          "release_year",
+          "price",
+        ])
+        .optional(),
+
+      sort_order: z
+        .enum(["asc", "desc"])
+        .optional(),
+    }).refine(
+      (input) =>
+        input.year_start === undefined ||
+        input.year_end === undefined ||
+        input.year_start <= input.year_end,
+      {
+        message:
+          "Starting year cannot be greater than ending year",
+        path: ["year_start"],
+      },
+    ),
+    )
+    .query(async ({ ctx, input }) => {
       const audioTypes = ["audio/mpeg", "audio/mp3"];
       const videoTypes = ["video/mp4", "video/webm", "video/mov"];
       const filetypeFilter =
         input.filetypes?.length === 1
           ? {
-              filetype: {
-                in:
-                  input.filetypes?.[0] === "audio"
-                    ? audioTypes
-                    : videoTypes,
-              },
-            }
-          : {}
-      const searchTerms = (input.search ?? "").trim().split(/\s+/).filter(Boolean);
-
-      const filter = {
-        is_published:true,
-        is_reviewed:true,
-        ...(searchTerms.length ? { AND: searchTerms.map((term) => ({ keywords: { contains: term } })) } : {}),
-        ...(input.explicit === "dirty" ? { is_explicit: true } : input.explicit === "clean" ? { is_explicit: false } : {}),
-        ...filetypeFilter, // ✅ ADD HERE
-        ...input.genre.length>0?{
-          genre_track:{
-            some:{
-              genre:{
-                slug:{
-                  in:input.genre
-                }
-              }
-            }
-          }
-        }:{},
-        ...input.tag.length>0?{
-          tag_track:{
-            some:{
-              tag:{
-                slug:{
-                  in:input.tag
-                }
-              }
-            }
-          }
-        }:{},
-        ...input.is_editor?{
-          userId:ctx.session.user.id
-        }:{},
-        ...input.key.length>0?{
-          in_key:{
-            in:input.key
-          }
-        }:{},
-      }
-      const count = await ctx.db.track.aggregate({
-        where:filter,
-        _count: {
-          id: true,
-        },
-      })
-      const tracks = await ctx.db.track.findMany({
-          take:input.take,
-          skip:input.skip,
-          orderBy: [
-            { releaseAt: "desc" },
-            { title: "asc" },
-            { is_explicit: "asc" },
-          ],
-          where: filter,
-          select:{
-            id:true,
-            title:true,
-            artist:true,
-            is_opm:true,
-            is_explicit:true,
-            is_disabled:true,
-            is_exclusive:true,
-            preview_key:true,
-            duration:true,
-            releaseAt:true,
-            in_key:true,
-            energy:true,
-            price:true,
-            bpm_start:true,
-            bpm_end:true,
-            filetype:true,
-            release_year:true,
-            user:{
-              select:{
-                id:true,
-                username:true,
-                image:true,
-              }
-            },
-            genre_track:{
-              select:{
-                genre:{
-                  select:{
-                    name:true
-                  }
-                }
-              }
-            },
-            tag_track:{
-              select:{
-                tag:{
-                  select:{
-                    name:true
-                  }
-                }
-              }
-            },
-            _count:{
-              select:{
-                downloadTrack:true
-
-              }
-
-            }
-          }
-        });
-
-        return {
-          count:count,
-          tracks:tracks
-        }
-    }),
-   getAllMainReleases: publicProcedure
-  .input(
-    z
-      .object({
-        search: z.string().nullish(),
-        genre: z.array(z.string()),
-        tag: z.array(z.string()),
-        key: z.array(z.string()),
-
-        bpm_start: z
-          .number()
-          .min(0)
-          .max(200)
-          .default(0),
-
-        bpm_end: z
-          .number()
-          .min(0)
-          .max(200)
-          .default(200),
-
-        take: z.number().max(100),
-        skip: z.number(),
-
-        is_editor: z.boolean(),
-        is_editor_id: z.string().nullable(),
-        selectionFilter: z.string().nullish(),
-
-        filetypes: z
-          .array(z.string())
-          .optional(),
-
-        explicit: z
-          .enum([
-            "all",
-            "clean",
-            "dirty",
-          ])
-          .default("all"),
-
-        // Mixed In Key energy levels.
-        energy: z
-          .array(
-            z
-              .number()
-              .int()
-              .min(1)
-              .max(10),
-          )
-          .optional(),
-
-        // Release-year range.
-        year_start: z
-          .number()
-          .int()
-          .min(1950)
-          .max(CURRENT_YEAR)
-          .optional(),
-
-        year_end: z
-          .number()
-          .int()
-          .min(1950)
-          .max(CURRENT_YEAR)
-          .optional(),
-
-        // Optional sorting.
-        sort: z
-          .enum([
-            "track",
-            "key",
-            "bpm",
-            "energy",
-            "release_year",
-            "price",
-          ])
-          .optional(),
-
-        sort_order: z
-          .enum(["asc", "desc"])
-          .optional(),
-      })
-      .refine(
-        (input) =>
-          input.year_start === undefined ||
-          input.year_end === undefined ||
-          input.year_start <= input.year_end,
-        {
-          message:
-            "Starting year cannot be greater than ending year",
-          path: ["year_start"],
-        },
-      ),
-  )
-  .query(async ({ ctx, input }) => {
-    const audioTypes = [
-      "audio/mpeg",
-      "audio/mp3",
-    ];
-
-    const videoTypes = [
-      "video/mp4",
-      "video/webm",
-      "video/mov",
-    ];
-
-    const filetypeFilter =
-      input.filetypes?.length === 1
-        ? {
             filetype: {
               in:
-                input.filetypes[0] ===
-                "audio"
+                input.filetypes?.[0] === "audio"
                   ? audioTypes
                   : videoTypes,
             },
           }
-        : {};
+          : {}
+      const searchTerms = (input.search ?? "").trim().split(/\s+/).filter(Boolean);
 
-    const searchTerms = (
-      input.search ?? ""
-    )
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-
-    const filter: Prisma.TrackWhereInput = {
-      is_published: true,
-      is_reviewed: true,
-      is_disabled: false,
-
-      ...filetypeFilter,
-
-      ...(searchTerms.length > 0
-        ? {
-            AND: searchTerms.map(
-              (term) => ({
-                keywords: {
-                  contains: term,
-                },
-              }),
-            ),
-          }
-        : {}),
-
-      ...(input.explicit === "dirty"
-        ? {
-            is_explicit: true,
-          }
-        : input.explicit === "clean"
-          ? {
-              is_explicit: false,
+      const filter = {
+        is_published: true,
+        is_reviewed: true,
+        ...(searchTerms.length ? { AND: searchTerms.map((term) => ({ keywords: { contains: term } })) } : {}),
+        ...(input.explicit === "dirty" ? { is_explicit: true } : input.explicit === "clean" ? { is_explicit: false } : {}),
+        ...filetypeFilter, // ✅ ADD HERE
+        ...input.genre.length > 0 ? {
+          genre_track: {
+            some: {
+              genre: {
+                slug: {
+                  in: input.genre
+                }
+              }
             }
-          : {}),
-
-      ...(input.is_editor_id
-        ? {
-            user: {
-              id: input.is_editor_id,
-            },
           }
-        : {}),
-
-      ...(input.selectionFilter ===
-      "opm"
-        ? {
-            is_opm: true,
+        } : {},
+        ...input.tag.length > 0 ? {
+          tag_track: {
+            some: {
+              tag: {
+                slug: {
+                  in: input.tag
+                }
+              }
+            }
           }
-        : {}),
-
-      ...(input.selectionFilter ===
-      "exclusive"
-        ? {
-            is_exclusive: true,
+        } : {},
+        ...input.is_editor ? {
+          userId: ctx.session.user.id
+        } : {},
+        ...input.key.length > 0 ? {
+          in_key: {
+            in: input.key
           }
-        : {}),
-
-      ...(input.genre.length > 0
-        ? {
-            genre_track: {
-              some: {
-                genre: {
-                  slug: {
-                    in: input.genre,
-                  },
-                },
-              },
-            },
-          }
-        : {}),
-
-      ...(input.tag.length > 0
-        ? {
-            tag_track: {
-              some: {
-                tag: {
-                  slug: {
-                    in: input.tag,
-                  },
-                },
-              },
-            },
-          }
-        : {}),
-
-      bpm_start: {
-        gte: input.bpm_start,
-        lte: input.bpm_end,
-      },
-
-      ...(input.key.length > 0
-        ? {
-            in_key: {
-              in: input.key,
-            },
-          }
-        : {}),
-
-      // Optional energy filter.
-      ...(input.energy?.length
-        ? {
+        } : {},
+        // Optional energy filter.
+        ...(input.energy?.length
+          ? {
             energy: {
               in: input.energy,
             },
           }
-        : {}),
+          : {}),
 
-      // Optional release-year range.
-      ...(input.year_start !==
-        undefined ||
-      input.year_end !== undefined
-        ? {
+        // Optional release-year range.
+        ...(input.year_start !==
+          undefined ||
+          input.year_end !== undefined
+          ? {
             release_year: {
               ...(input.year_start !==
-              undefined
+                undefined
                 ? {
-                    gte:
-                      input.year_start,
-                  }
+                  gte:
+                    input.year_start,
+                }
                 : {}),
 
               ...(input.year_end !==
-              undefined
+                undefined
                 ? {
-                    lte:
-                      input.year_end,
-                  }
+                  lte:
+                    input.year_end,
+                }
                 : {}),
             },
           }
-        : {}),
-    };
+          : {}),
+      }
+      const sortFieldMap = {
+        track: "title",
+        key: "in_key",
+        bpm: "bpm_start",
+        energy: "energy",
+        release_year: "release_year",
+        price: "price",
+      } as const;
 
-    /*
-     * Maps the URL/UI sort names to
-     * their actual Prisma Track fields.
-     */
-    const sortFieldMap = {
-      track: "title",
-      key: "in_key",
-      bpm: "bpm_start",
-      energy: "energy",
-      release_year: "release_year",
-      price: "price",
-    } as const;
+      const defaultOrderBy: Prisma.TrackOrderByWithRelationInput[] =
+        [
+          {
+            releaseAt: "desc",
+          },
+          {
+            updatedAt: "desc",
+          },
+        ];
 
-    /*
-     * Keep your original order when
-     * no sort column is selected.
-     */
-    const defaultOrderBy: Prisma.TrackOrderByWithRelationInput[] =
-      [
-        {
-          releaseAt: "desc",
-        },
-        {
-          updatedAt: "desc",
-        },
-      ];
+      const sortDirection: Prisma.SortOrder =
+        input.sort_order ?? "asc";
 
-    const sortDirection: Prisma.SortOrder =
-      input.sort_order ?? "asc";
+      const selectedOrderBy:
+        | Prisma.TrackOrderByWithRelationInput
+        | undefined = input.sort
+          ? {
+            [sortFieldMap[input.sort]]:
+              sortDirection,
+          }
+          : undefined;
 
-    const selectedOrderBy:
-      | Prisma.TrackOrderByWithRelationInput
-      | undefined = input.sort
-      ? {
-          [sortFieldMap[input.sort]]:
-            sortDirection,
-        }
-      : undefined;
-
-    const orderBy: Prisma.TrackOrderByWithRelationInput[] =
-      selectedOrderBy
-        ? [
+      const orderBy: Prisma.TrackOrderByWithRelationInput[] =
+        selectedOrderBy
+          ? [
             selectedOrderBy,
 
             // Stable fallback when two values match.
@@ -1324,144 +1074,523 @@ export const trackRouter = createTRPCRouter({
               updatedAt: "desc",
             },
           ]
-        : defaultOrderBy;
+          : defaultOrderBy;
+      const [count, tracks] =
+        await Promise.all([
+          ctx.db.track.count({
+            where: filter,
+          }),
 
-    const [count, tracks] =
-      await Promise.all([
-        ctx.db.track.count({
-          where: filter,
-        }),
+          ctx.db.track.findMany({
+            where: filter,
+            take: input.take,
+            skip: input.skip,
+            orderBy,
 
-        ctx.db.track.findMany({
-          where: filter,
-          take: input.take,
-          skip: input.skip,
-          orderBy,
+            select: {
+              id: true,
+              title: true,
+              artist: true,
+              filetype: true,
+              price: true,
+              is_explicit: true,
+              is_disabled: true,
+              preview_key: true,
+              duration: true,
+              releaseAt: true,
+              in_key: true,
+              energy: true,
+              bpm_start: true,
+              bpm_end: true,
+              release_year: true,
 
-          select: {
-            id: true,
-            title: true,
-            artist: true,
-            filetype: true,
-            price: true,
-            is_explicit: true,
-            preview_key: true,
-            duration: true,
-            releaseAt: true,
-            in_key: true,
-            energy: true,
-            bpm_start: true,
-            bpm_end: true,
-            release_year: true,
-
-            genre_track: {
-              select: {
-                genre: {
-                  select: {
-                    name: true,
+              genre_track: {
+                select: {
+                  genre: {
+                    select: {
+                      name: true,
+                    },
                   },
                 },
               },
-            },
 
-            tag_track: {
-              select: {
-                tag: {
-                  select: {
-                    name: true,
+              tag_track: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
                   },
                 },
               },
-            },
-
-            user: {
-              select: {
-                id: true,
-                username: true,
-                image: true,
+              _count:{
+                select:{
+                  downloadTrack:true,
+                }
+              },
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  image: true,
+                },
               },
             },
+          }),
+        ]);
+
+      return {
+        count: {
+          _count: {
+            id: count,
           },
-        }),
-      ]);
-
-    return {
-      count: {
-        _count: {
-          id: count,
         },
-      },
-      tracks,
-    };
-  }),
-     getIdMain: publicProcedure
-    .input(z.object({
-      id:z.string(), 
-    }))
-    .query(async({ ctx , input }) => {
-        return await ctx.db.track.findUnique({
-          where: { 
-            id: input.id
+        tracks: tracks
+      }
+    }),
+  getAllMainReleases: publicProcedure
+    .input(
+      z
+        .object({
+          search: z.string().nullish(),
+          genre: z.array(z.string()),
+          tag: z.array(z.string()),
+          key: z.array(z.string()),
+
+          bpm_start: z
+            .number()
+            .min(0)
+            .max(200)
+            .default(0),
+
+          bpm_end: z
+            .number()
+            .min(0)
+            .max(200)
+            .default(200),
+
+          take: z.number().max(100),
+          skip: z.number(),
+
+          is_editor: z.boolean(),
+          is_editor_id: z.string().nullable(),
+          selectionFilter: z.string().nullish(),
+
+          filetypes: z
+            .array(z.string())
+            .optional(),
+
+          explicit: z
+            .enum([
+              "all",
+              "clean",
+              "dirty",
+            ])
+            .default("all"),
+
+          // Mixed In Key energy levels.
+          energy: z
+            .array(
+              z
+                .number()
+                .int()
+                .min(1)
+                .max(10),
+            )
+            .optional(),
+
+          // Release-year range.
+          year_start: z
+            .number()
+            .int()
+            .min(1950)
+            .max(CURRENT_YEAR)
+            .optional(),
+
+          year_end: z
+            .number()
+            .int()
+            .min(1950)
+            .max(CURRENT_YEAR)
+            .optional(),
+
+          // Optional sorting.
+          sort: z
+            .enum([
+              "track",
+              "key",
+              "bpm",
+              "energy",
+              "release_year",
+              "price",
+            ])
+            .optional(),
+
+          sort_order: z
+            .enum(["asc", "desc"])
+            .optional(),
+        })
+        .refine(
+          (input) =>
+            input.year_start === undefined ||
+            input.year_end === undefined ||
+            input.year_start <= input.year_end,
+          {
+            message:
+              "Starting year cannot be greater than ending year",
+            path: ["year_start"],
           },
-          select:{
-            id:true,
-            title:true,
-            artist:true,
-            price:true,
-            is_opm:true,
-            is_explicit:true,
-            is_exclusive:true,
-            preview_count:true,
-            preview_key:true,
-            duration:true,
-            releaseAt:true,
-            in_key:true,
-            bpm_start:true,
-            bpm_end:true,
-            release_year:true,
-            genre_track:{
-              select:{
-                genre:{
-                  select:{
-                    id:true,
-                    name:true,
-                    slug:true
-                  }
+        ),
+    )
+    .query(async ({ ctx, input }) => {
+      const audioTypes = [
+        "audio/mpeg",
+        "audio/mp3",
+      ];
+
+      const videoTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/mov",
+      ];
+
+      const filetypeFilter =
+        input.filetypes?.length === 1
+          ? {
+            filetype: {
+              in:
+                input.filetypes[0] ===
+                  "audio"
+                  ? audioTypes
+                  : videoTypes,
+            },
+          }
+          : {};
+
+      const searchTerms = (
+        input.search ?? ""
+      )
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const filter: Prisma.TrackWhereInput = {
+        is_published: true,
+        is_reviewed: true,
+        is_disabled: false,
+
+        ...filetypeFilter,
+
+        ...(searchTerms.length > 0
+          ? {
+            AND: searchTerms.map(
+              (term) => ({
+                keywords: {
+                  contains: term,
+                },
+              }),
+            ),
+          }
+          : {}),
+
+        ...(input.explicit === "dirty"
+          ? {
+            is_explicit: true,
+          }
+          : input.explicit === "clean"
+            ? {
+              is_explicit: false,
+            }
+            : {}),
+
+        ...(input.is_editor_id
+          ? {
+            user: {
+              id: input.is_editor_id,
+            },
+          }
+          : {}),
+
+        ...(input.selectionFilter ===
+          "opm"
+          ? {
+            is_opm: true,
+          }
+          : {}),
+
+        ...(input.selectionFilter ===
+          "exclusive"
+          ? {
+            is_exclusive: true,
+          }
+          : {}),
+
+        ...(input.genre.length > 0
+          ? {
+            genre_track: {
+              some: {
+                genre: {
+                  slug: {
+                    in: input.genre,
+                  },
+                },
+              },
+            },
+          }
+          : {}),
+
+        ...(input.tag.length > 0
+          ? {
+            tag_track: {
+              some: {
+                tag: {
+                  slug: {
+                    in: input.tag,
+                  },
+                },
+              },
+            },
+          }
+          : {}),
+
+        bpm_start: {
+          gte: input.bpm_start,
+          lte: input.bpm_end,
+        },
+
+        ...(input.key.length > 0
+          ? {
+            in_key: {
+              in: input.key,
+            },
+          }
+          : {}),
+
+        // Optional energy filter.
+        ...(input.energy?.length
+          ? {
+            energy: {
+              in: input.energy,
+            },
+          }
+          : {}),
+
+        // Optional release-year range.
+        ...(input.year_start !==
+          undefined ||
+          input.year_end !== undefined
+          ? {
+            release_year: {
+              ...(input.year_start !==
+                undefined
+                ? {
+                  gte:
+                    input.year_start,
+                }
+                : {}),
+
+              ...(input.year_end !==
+                undefined
+                ? {
+                  lte:
+                    input.year_end,
+                }
+                : {}),
+            },
+          }
+          : {}),
+      };
+
+      /*
+       * Maps the URL/UI sort names to
+       * their actual Prisma Track fields.
+       */
+      const sortFieldMap = {
+        track: "title",
+        key: "in_key",
+        bpm: "bpm_start",
+        energy: "energy",
+        release_year: "release_year",
+        price: "price",
+      } as const;
+
+      /*
+       * Keep your original order when
+       * no sort column is selected.
+       */
+      const defaultOrderBy: Prisma.TrackOrderByWithRelationInput[] =
+        [
+          {
+            releaseAt: "desc",
+          },
+          {
+            updatedAt: "desc",
+          },
+        ];
+
+      const sortDirection: Prisma.SortOrder =
+        input.sort_order ?? "asc";
+
+      const selectedOrderBy:
+        | Prisma.TrackOrderByWithRelationInput
+        | undefined = input.sort
+          ? {
+            [sortFieldMap[input.sort]]:
+              sortDirection,
+          }
+          : undefined;
+
+      const orderBy: Prisma.TrackOrderByWithRelationInput[] =
+        selectedOrderBy
+          ? [
+            selectedOrderBy,
+
+            // Stable fallback when two values match.
+            {
+              releaseAt: "desc",
+            },
+            {
+              updatedAt: "desc",
+            },
+          ]
+          : defaultOrderBy;
+
+      const [count, tracks] =
+        await Promise.all([
+          ctx.db.track.count({
+            where: filter,
+          }),
+
+          ctx.db.track.findMany({
+            where: filter,
+            take: input.take,
+            skip: input.skip,
+            orderBy,
+
+            select: {
+              id: true,
+              title: true,
+              artist: true,
+              filetype: true,
+              price: true,
+              is_explicit: true,
+              preview_key: true,
+              duration: true,
+              releaseAt: true,
+              in_key: true,
+              energy: true,
+              bpm_start: true,
+              bpm_end: true,
+              release_year: true,
+
+              genre_track: {
+                select: {
+                  genre: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+
+              tag_track: {
+                select: {
+                  tag: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  image: true,
+                },
+              },
+            },
+          }),
+        ]);
+
+      return {
+        count: {
+          _count: {
+            id: count,
+          },
+        },
+        tracks,
+      };
+    }),
+  getIdMain: publicProcedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.track.findUnique({
+        where: {
+          id: input.id
+        },
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          price: true,
+          is_opm: true,
+          is_explicit: true,
+          is_exclusive: true,
+          preview_count: true,
+          preview_key: true,
+          duration: true,
+          releaseAt: true,
+          in_key: true,
+          bpm_start: true,
+          bpm_end: true,
+          release_year: true,
+          genre_track: {
+            select: {
+              genre: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true
                 }
               }
-            },
-            tag_track:{
-              select:{
-                tag:{
-                  select:{
-                    id:true,
-                    name:true,
-                    slug:true
-                  }
+            }
+          },
+          tag_track: {
+            select: {
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true
                 }
               }
-            },
-            user:{
-              select:{
-                id:true,
-                username:true,
-                image:true,
-              }
-            },
-            spotify_track:{
-              select:{
-                spotify:{
-                  select:{
-                    spotifyId:true,
-                    artists:true,
-                    name:true,
-                    previewUrl:true,
-                    spotifyUrl:true
-                  }
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              image: true,
+            }
+          },
+          spotify_track: {
+            select: {
+              spotify: {
+                select: {
+                  spotifyId: true,
+                  artists: true,
+                  name: true,
+                  previewUrl: true,
+                  spotifyUrl: true
                 }
               }
             }
           }
-        });
+        }
+      });
     }),
 })
