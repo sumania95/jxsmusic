@@ -17,9 +17,10 @@ interface Props {
     id: string; // releaseId
     fileName: string; // zip file name
     trackIds: string[]; // track IDs to download
+    source:"track" | "pack" | undefined;
 }
 
-export const DownloadZipComponent = ({ id, fileName, trackIds }: Props) => {
+export const DownloadZipComponent = ({ id, fileName, trackIds,source }: Props) => {
     const { data: session } = useSession();
     const [zipFiles, setZipFiles] = useAtom(zipFilesAtom);
     const { mutateAsync: newdownloaded } = api.signedUrl.downloadObject.useMutation();
@@ -56,7 +57,7 @@ export const DownloadZipComponent = ({ id, fileName, trackIds }: Props) => {
         try {
             // Download tracks in batches
             await runInBatches(trackIds, 4, async (trackId: string) => {
-                const data = await newdownloaded({ id: trackId, source: "pack" });
+                const data = await newdownloaded({ id: trackId, source });
                 const trackFileName = safeFileName(data.filename);
 
                 // update filename in atom

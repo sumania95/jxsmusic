@@ -80,6 +80,8 @@ export const downloadsRouter = createTRPCRouter({
               bpm_end: true,
               bpm_start: true,
               is_explicit: true,
+              filetype:true,
+              size:true,
             },
           },
         },

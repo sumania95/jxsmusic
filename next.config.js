@@ -25,6 +25,11 @@ const config = {
         hostname: "d1h4eva57h1gk1.cloudfront.net",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "0x84kengln.ufs.sh",
+        pathname: "/**",
+      },
     ],
   },
 };

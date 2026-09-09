@@ -790,11 +790,12 @@ const MediaPlayerComponent = () => {
             items-center gap-3 text-sm
           "
         >
-          <div className="hidden h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.04] sm:block">
+          <div className="hidden h-10 w-10 shrink-0 overflow-hidden border border-white/10 bg-white/[0.04] sm:block">
             <ImageThumbnailComponent
               image={String(
                 currentTrack?.islink,
               )}
+              rounded={false}
             />
           </div>
 

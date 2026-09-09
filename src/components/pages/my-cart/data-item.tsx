@@ -29,6 +29,7 @@ type Props = {
     price: number;
     title: string | null;
     artist: string | null;
+    is_explicit:boolean
     user: {
       image: string | null;
     };
@@ -52,13 +53,14 @@ const CartTrackItemComponent = (props: Props) => {
       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/[0.06] bg-zinc-950">
         <ImageThumbnailComponent
           image={String(props.track?.user.image ?? props.album?.image)}
+          rounded={false}
         />
       </div>
 
       {/* TRACK / ALBUM INFO */}
       <div className="min-w-0 flex-1">
         <h3 className="truncate text-sm font-semibold text-zinc-200">
-          {props.track?.title ?? props.album?.name}
+          {props.track?.title ?? props.album?.name} {props.track?`${props.track.is_explicit?"Dirty":"Clean"}`:""}
         </h3>
 
         <h3 className="mt-0.5 truncate text-[11px] text-zinc-600">

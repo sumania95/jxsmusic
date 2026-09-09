@@ -143,6 +143,7 @@ export const cartRouter = createTRPCRouter({
                 title:true,
                 artist:true,
                 price:true,
+                is_explicit:true,
                 user:{
                   select:{
                     image:true,

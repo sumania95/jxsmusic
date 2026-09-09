@@ -1,6 +1,7 @@
+"use client"
+
 import React, { useState } from "react"
 import { Album, ChevronDown, Music2 } from "lucide-react"
-import { IconZip } from "@tabler/icons-react"
 import {
   parseAsInteger,
   parseAsString,
@@ -10,14 +11,9 @@ import {
 import { api } from "@/utils/api"
 import { formatDateShort, formatTrackTitle } from "@/lib/utils"
 
-import EmptyComponent from "../common/empty"
-import LoadingSkeletonComponents from "../common/loading-skeleton"
-import BannerTitleComponent from "@/components/common/banner-title"
-import { ProfileMeta } from "@/components/common/metadata"
 import DownloadTrackComponent from "@/components/common/download"
 import { DownloadZipComponent } from "@/components/common/download-zip"
 import SearchComponent from "@/components/common/search"
-import PaginationNewFixedLimitComponents from "@/components/common/pagination-new-fixed-limit"
 
 import {
   Select,
@@ -29,13 +25,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import PaginationNewComponents from "@/components/common/pagination-new"
-import HeaderWithCouponBanner from "../home/coupon"
+import LoadingSkeletonComponents from "../../common/loading-skeleton"
+import EmptyComponent from "../../common/empty"
+
+const MAX_TRACK_ZIP_SIZE_BYTES = 1024 * 1024 * 1024
+
+type SelectedTrack = {
+  id: string
+  size: number
+}
 
 const MyDownloadsComponents = () => {
   const [defaultLimit] = useState(20)
+  const [selectedTracks, setSelectedTracks] = useState<SelectedTrack[]>([])
+  const [selectionError, setSelectionError] = useState("")
 
-  const [tab, setTab] = useQueryState(
-    "type",
+  const [downloadType, setDownloadType] = useQueryState(
+    "downloadType",
     parseAsString.withDefault("tracks")
   )
 
@@ -60,7 +66,7 @@ const MyDownloadsComponents = () => {
   )
 
   const activeTab =
-    tab === "albums"
+    downloadType === "albums"
       ? "albums"
       : "tracks"
 
@@ -112,7 +118,7 @@ const MyDownloadsComponents = () => {
     nextTab: "tracks" | "albums"
   ) => {
     await Promise.all([
-      setTab(nextTab),
+      setDownloadType(nextTab),
       setPager(1),
     ])
   }
@@ -126,17 +132,88 @@ const MyDownloadsComponents = () => {
     ])
   }
 
+  const visibleTracks =
+    paidTracks.data?.purchases.flatMap(({ track }) =>
+      track ? [{ id: track.id, size: track.size }] : []
+    ) ?? []
+
+  const selectedTrackIds = selectedTracks.map(({ id }) => id)
+  const selectedSizeBytes = selectedTracks.reduce(
+    (total, track) => total + track.size,
+    0
+  )
+
+  const allVisibleTracksSelected =
+    visibleTracks.length > 0 &&
+    visibleTracks.every(({ id }) => selectedTrackIds.includes(id))
+
+  const toggleTrack = (track: SelectedTrack) => {
+    if (selectedTrackIds.includes(track.id)) {
+      setSelectedTracks((current) =>
+        current.filter(({ id }) => id !== track.id)
+      )
+      setSelectionError("")
+      return
+    }
+
+    if (selectedSizeBytes + track.size > MAX_TRACK_ZIP_SIZE_BYTES) {
+      setSelectionError("The selected tracks cannot exceed 1 GB.")
+      return
+    }
+
+    setSelectedTracks((current) => [...current, track])
+    setSelectionError("")
+  }
+
+  const toggleAllVisibleTracks = () => {
+    if (allVisibleTracksSelected) {
+      const visibleIds = new Set(visibleTracks.map(({ id }) => id))
+      setSelectedTracks((current) =>
+        current.filter(({ id }) => !visibleIds.has(id))
+      )
+      setSelectionError("")
+      return
+    }
+
+    const next = [...selectedTracks]
+    const selectedIds = new Set(selectedTracks.map(({ id }) => id))
+    let totalSize = selectedSizeBytes
+    let skippedTrack = false
+
+    for (const track of visibleTracks) {
+      if (selectedIds.has(track.id)) continue
+
+      if (totalSize + track.size > MAX_TRACK_ZIP_SIZE_BYTES) {
+        skippedTrack = true
+        continue
+      }
+
+      next.push(track)
+      selectedIds.add(track.id)
+      totalSize += track.size
+    }
+
+    setSelectedTracks(next)
+    setSelectionError(
+      skippedTrack
+        ? "Some tracks were skipped because the ZIP limit is 1 GB."
+        : ""
+    )
+  }
+
+  const formatSizeMB = (bytes: number | null | undefined) => {
+    if (bytes == null) return "Unknown size"
+
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+  }
+
   return (
     <div className="flex w-full flex-col items-start gap-5">
-      <ProfileMeta
-        title="My Downloads"
-        description="Download your purchased tracks and albums"
-      />
       <div className="w-full">
-        <HeaderWithCouponBanner
-          title="My Downloads"
-          description="Download your purchased tracks and albums"
-        />
+        <h3 className="text-lg font-semibold text-white">Purchases</h3>
+        <p className="mt-1 text-sm text-white/50">
+          Download your purchased tracks, albums, and multi-packs.
+        </p>
       </div>
       {/* FILTERS */}
       <section
@@ -327,7 +404,55 @@ const MyDownloadsComponents = () => {
             activeTab === "tracks" && (
               <div className="flex flex-col">
                 {paidTracks.data?.purchases.length ? (
-                  paidTracks.data.purchases.map(
+                  <>
+                    <div className="mb-2 flex flex-col gap-3 rounded-xl border border-[#B9FF00]/15 bg-[#B9FF00]/[0.04] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <label className="flex cursor-pointer items-center gap-3 text-xs font-medium text-zinc-300">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleTracksSelected}
+                          onChange={toggleAllVisibleTracks}
+                          className="size-4 rounded border-white/20 bg-[#111518] accent-[#B9FF00]"
+                        />
+                        Select all tracks on this page
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        {selectedTrackIds.length > 0 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTracks([])
+                                setSelectionError("")
+                              }}
+                              className="rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 transition hover:bg-white/5 hover:text-white"
+                            >
+                              Clear ({selectedTrackIds.length})
+                            </button>
+
+                            <DownloadZipComponent
+                              id={`selected-tracks-${selectedTrackIds.length}`}
+                              fileName="selected-tracks"
+                              trackIds={selectedTrackIds}
+                              source="track"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mb-2 flex items-center justify-between px-1 text-[10px] uppercase tracking-wider">
+                      <span className="text-zinc-500">
+                        Selected: {formatSizeMB(selectedSizeBytes)} / 1024.00 MB
+                      </span>
+                      {selectionError && (
+                        <span role="alert" className="text-red-400">
+                          {selectionError}
+                        </span>
+                      )}
+                    </div>
+
+                    {paidTracks.data.purchases.map(
                     (purchase, index) => {
                       const track =
                         purchase.track
@@ -349,58 +474,47 @@ const MyDownloadsComponents = () => {
                             border-white/[0.05]
                             py-3
                             last:border-b-0
+                            px-3
                           "
                         >
-                          <div
-                            className="
-          flex
-          h-8
-          w-8
-          shrink-0
-          items-center
-          justify-center
-          rounded-full
-          border
-          border-green-400/20
-          text-[10px]
-          font-bold
-          text-green-400
-        "
-                          >
-                            {trackNumber}
-                          </div>
-
-                          <div
-                            className="
-                              flex
-                              h-9
-                              w-9
-                              shrink-0
-                              items-center
-                              justify-center
-                              rounded-xl
-                              bg-green-500/[0.07]
-                              text-green-400
-                            "
-                          >
-                            <Music2 className="h-4 w-4" />
-                          </div>
-
+                          <input
+                            type="checkbox"
+                            checked={selectedTrackIds.includes(track.id)}
+                            onChange={() =>
+                              toggleTrack({ id: track.id, size: track.size })
+                            }
+                            aria-label={`Select ${track.artist} - ${track.title}`}
+                            className="size-4 shrink-0 rounded border-white/20 bg-[#111518] accent-[#B9FF00]"
+                          />
                           <div className="min-w-0 flex-1">
-                            <h3
-                              className="
-                                truncate
-                                text-md
-                                font-medium
-                                text-zinc-300
-                              "
-                            >
-                              {track.artist} -{" "}
-                              {formatTrackTitle(
-                                track.title,
-                                track.is_explicit
-                              )}
+                            <h3 className="truncate text-md font-medium text-zinc-300">
+                             {formatTrackTitle(track.title, track.is_explicit)}
                             </h3>
+
+                            <p className="mt-0.5 truncate text-xs text-zinc-400">
+                                {track.artist ?? "Unknown artist"}
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-zinc-500">
+                                {track.filetype?.toLowerCase().includes("audio") && (
+                                    <span className="rounded-full border border-[#B9FF00]/20 bg-[#B9FF00]/10 px-2 py-0.5 text-[#B9FF00]">
+                                    Audio
+                                    </span>
+                                )}
+
+                                {track.filetype?.toLowerCase().includes("video") && (
+                                    <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-violet-300">
+                                    Video
+                                    </span>
+                                )}
+
+                                <span>{track.bpm_start} BPM</span>
+                                <span aria-hidden="true">•</span>
+                                <span>{track.in_key ?? "Unknown key"}</span>
+                                <span aria-hidden="true">•</span>
+                                <span>{track.filetype ?? "Unknown file type"}</span>
+                                <span aria-hidden="true">•</span>
+                                <span>{formatSizeMB(track.size)}</span>
+                            </div>
 
                             <p
                               className="
@@ -423,7 +537,8 @@ const MyDownloadsComponents = () => {
                         </div>
                       )
                     }
-                  )
+                    )}
+                  </>
                 ) : (
                   <EmptyComponent />
                 )}

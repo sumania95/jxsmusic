@@ -287,11 +287,13 @@ const end = Math.min(
 
                 </div>
                 {/* <div className="flex shrink-0 rounded-xl border border-white/10 bg-[#111518]/40 p-1">{(["all", "clean", "dirty"] as const).map(value => <button key={value} onClick={() => void setExplicit(value)} className={`rounded-lg px-3 py-2 text-xs capitalize ${explicit === value ? value === "dirty" ? "bg-red-500 text-white" : value === "clean" ? "bg-emerald-500 text-black" : "bg-[#B9FF00] text-black" : "text-zinc-400"}`}>{value}</button>)}</div> */}
-                <TrackColumnFilter
-                  visibleColumns={visibleColumns}
-                  onToggle={toggleColumn}
-                  onReset={resetColumns}
-                />
+                <div className="hidden lg:flex">
+                  <TrackColumnFilter
+                    visibleColumns={visibleColumns}
+                    onToggle={toggleColumn}
+                    onReset={resetColumns}
+                  />
+                </div>
               </div>
 
               {/* Mobile search */}

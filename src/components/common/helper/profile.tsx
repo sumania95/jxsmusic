@@ -14,6 +14,7 @@ import {
   Star,
   Landmark,
   MessageCircleCode,
+  User,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -230,31 +231,22 @@ const ProfileComponent = () => {
         {/* CUSTOMER LINKS */}
         <div className="space-y-0.5">
           <MenuRow
+            icon={User}
+            label="Account"
+            description="Manage Account,Purchases,Orders"
+            active={router.pathname === "/account"}
+            onSelect={() => navigate("/account")}
+          />
+          <MenuRow
             icon={CreditCard}
             label={`${creditBalance?.credit ?? 0} credits left`}
             description="Buy 180 non-expiring credits for $200"
             active={
-              router.pathname === "/account" ||
               router.pathname === "/credits"
             }
             onSelect={() => navigate("/credits")}
           />
-          <MenuRow icon={Star} label="Write a review" description="Share your customer experience" active={router.pathname === "/reviews/new"} onSelect={() => navigate("/reviews/new")} />
-          <MenuRow
-            icon={Package}
-            label="My Orders"
-            description="Transactions and payment status"
-            active={router.pathname === "/my-orders"}
-            onSelect={() => navigate("/my-orders")}
-          />
-
-          <MenuRow
-            icon={Download}
-            label="My Downloads"
-            description="Purchased tracks and albums"
-            active={router.pathname === "/my-downloads"}
-            onSelect={() => navigate("/my-downloads")}
-          />
+          
         </div>
 
         {/* MANAGEMENT LINKS */}

@@ -1,5 +1,5 @@
 import MainLayout from "@/components/layout/main-layout";
-import CreditsComponent from "@/components/pages/credits";
+import MyAccountData from "@/components/pages/account";
 import { requireAuth } from "@/server/authmiddleware";
 
 export const getServerSideProps = requireAuth(async () => ({ props: {} }));
@@ -7,7 +7,7 @@ export const getServerSideProps = requireAuth(async () => ({ props: {} }));
 export default function AccountPage() {
   return (
     <MainLayout>
-      <CreditsComponent />
+      <MyAccountData />
     </MainLayout>
   );
 }
