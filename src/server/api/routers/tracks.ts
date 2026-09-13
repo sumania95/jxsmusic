@@ -775,7 +775,7 @@ export const trackRouter = createTRPCRouter({
       return await ctx.db.track.findUnique({
         where: {
           id: input.id,
-          userId: ctx.session.user.id
+          // userId: ctx.session.user.id
         },
         select: {
           id: true,

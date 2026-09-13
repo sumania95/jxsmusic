@@ -230,8 +230,7 @@ const AddCartComponent = (props: Props) => {
       {/* =====================================================
           EDIT BUTTON
       ===================================================== */}
-      {session?.user.id === String(props.id) &&
-        router.pathname.startsWith(
+      {router.pathname.startsWith(
           '/restricted/editor/published'
         ) && (
           <Link

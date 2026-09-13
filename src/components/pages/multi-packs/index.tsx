@@ -3,7 +3,6 @@ import { defaultPageLimit } from "@/state/globalState"
 import { api } from "@/utils/api"
 import EmptyComponent from "../common/empty"
 import LoadingSkeletonComponents from "../common/loading-skeleton"
-import BannerTitleComponent from "@/components/common/banner-title"
 import {
   parseAsArrayOf,
   parseAsInteger,

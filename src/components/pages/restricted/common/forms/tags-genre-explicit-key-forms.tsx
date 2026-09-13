@@ -753,14 +753,17 @@ export function EnergySection({
                     selected
                       ? `
                           scale-[1.02]
+                          border-[#B9FF00]
+                        bg-[#B9FF00]
+                        text-black
                         `
                       : `
                           border-white/[0.06]
-                          bg-white/[0.015]
-                          text-zinc-500
-                          hover:border-[#B9FF00]/15
-                          hover:bg-white/[0.04]
-                          hover:text-white
+                        bg-white/[0.015]
+                        text-zinc-500
+                        hover:border-[#B9FF00]/15
+                        hover:bg-white/[0.04]
+                        hover:text-white
                         `
                   }
 

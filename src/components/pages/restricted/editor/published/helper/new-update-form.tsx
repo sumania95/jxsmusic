@@ -1,30 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import {
-  Check,
   CircleAlert,
   Disc3,
   Gauge,
-  KeyRound,
-  Layers3,
   LoaderIcon,
-  Music2,
   Save,
-  Search,
-  Sparkles,
-  Tags,
-  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -32,7 +16,6 @@ import * as Yup from "yup";
 import { api } from "@/utils/api";
 import { toast } from "sonner";
 import { useRouter } from "next/router";
-import { useDebounce } from "use-debounce";
 
 import EmptyComponent from "@/components/pages/common/empty";
 import LoadingSkeletonComponents from "@/components/pages/common/loading-skeleton";
@@ -41,7 +24,6 @@ import { useAtom, useAtomValue } from "jotai";
 import { tagItemsAtom } from "@/state/tagAtoms";
 import { genreItemsAtom } from "@/state/genreAtoms";
 
-import { formatTrackTitle } from "@/lib/utils";
 import { EnergySection, GenresSection, MusicKeySection, TagsSection, VocalLyricsSection } from "../../../common/forms/tags-genre-explicit-key-forms";
 import { OriginalCompositionSection } from "../../../common/forms/original-composition-section";
 import SectionHeader from "../../../common/forms/section-header";
@@ -151,29 +133,6 @@ export const createPostSchema = (isSuperAdmin: boolean) => Yup.object().shape({
       ),
   }),
 });
-
-/* =========================================================
-   TYPES
-========================================================= */
-
-interface SpotifyTrackType {
-  name: string;
-  artists: string;
-  spotifyId: string;
-  previewUrl?: string;
-  spotifyUrl?: string;
-}
-
-interface SpotifySearchMultiProps {
-  value: SpotifyTrackType[];
-  onSelect: (
-    track: SpotifyTrackType
-  ) => void;
-  onRemove: (
-    spotifyId: string
-  ) => void;
-  disabled?: boolean;
-}
 
 /* =========================================================
    MAIN COMPONENT
