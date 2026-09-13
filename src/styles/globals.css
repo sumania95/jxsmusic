@@ -209,9 +209,10 @@
 
   .dark-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #334155 #111518;
+    scrollbar-color: #b9ff00 #111518;
   }
 
+  /* Chrome / Edge / Safari */
   .dark-scrollbar::-webkit-scrollbar {
     width: 6px;
   }
@@ -221,12 +222,12 @@
   }
 
   .dark-scrollbar::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: #b9ff00;
     border-radius: 9999px;
   }
 
   .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: #d4ff66;
   }
 }
 
