@@ -40,7 +40,7 @@ const MultiPackItemComponent = (
         w-full
         flex-col
         overflow-hidden
-        rounded-2xl
+        rounded-lg
         border
         border-white/10
         bg-white/[0.02]
@@ -302,7 +302,7 @@ const MultiPackItemComponent = (
       {/* =====================================================
           BOTTOM ACCENT
       ===================================================== */}
-      <div
+      {/* <div
         className="
           absolute
           bottom-0
@@ -316,7 +316,7 @@ const MultiPackItemComponent = (
           group-hover:w-2/3
           group-hover:shadow-[0_0_10px_rgba(185,255,0,0.5)]
         "
-      />
+      /> */}
     </Link>
   )
 }

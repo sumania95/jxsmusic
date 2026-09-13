@@ -12,7 +12,6 @@ import {
   BadgePercent,
   Disc3,
   Music2,
-  UserRound,
 } from 'lucide-react'
 import { buildAlbumPlaylist } from '@/constant/helperPlaylist'
 import { parseAsInteger, useQueryState } from 'nuqs'
@@ -149,7 +148,7 @@ const MultiPackDetailComponent = (props: Props) => {
           "
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back To Multi Packs
+          Back To Packs
         </Link>
       </div>
 
@@ -390,120 +389,6 @@ const MultiPackDetailComponent = (props: Props) => {
                   {album?.count._count.id} edits
                 </span>
               </div>
-            </div>
-
-
-            {/* =================================================
-                CONTRIBUTOR
-            ================================================= */}
-            <div
-              className="
-                mt-6
-                border-t
-                border-white/[0.06]
-                pt-5
-              "
-            >
-              <p
-                className="
-                  mb-2
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.14em]
-                  text-zinc-600
-                "
-              >
-                Contributor
-              </p>
-
-              <Link
-                href={`/editors/${props.user.id}`}
-                className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-3
-                  rounded-2xl
-                  border
-                  border-white/[0.06]
-                  bg-white/[0.02]
-                  p-2
-                  pr-4
-                  transition-all
-                  hover:border-[#B9FF00]/15
-                  hover:bg-[#B9FF00]/[0.03]
-                "
-              >
-                <Avatar
-                  className="
-                    h-10
-                    w-10
-                    rounded-xl
-                    border
-                    border-white/[0.07]
-                  "
-                >
-                  <AvatarImage
-                    src={String(
-                      props.user.image
-                    )}
-                    className="
-                      rounded-xl
-                      object-cover
-                    "
-                  />
-
-                  <AvatarFallback
-                    className="
-                      flex
-                      h-full
-                      w-full
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-zinc-900
-                    "
-                  >
-                    <Image
-                      src="/images/jeff92-ayan-brand-mark.svg"
-                      alt="Logo"
-                      width={1080}
-                      height={1080}
-                      className="
-                        h-full
-                        w-full
-                        object-cover
-                      "
-                    />
-                  </AvatarFallback>
-                </Avatar>
-
-                <div>
-                  <p
-                    className="
-                      text-[9px]
-                      uppercase
-                      tracking-[0.1em]
-                      text-zinc-600
-                    "
-                  >
-                    DJ / Editor
-                  </p>
-
-                  <h3
-                    className="
-                      text-xs
-                      font-semibold
-                      text-zinc-300
-                      transition-colors
-                      group-hover:text-[#B9FF00]
-                    "
-                  >
-                    {props.user.username}
-                  </h3>
-                </div>
-              </Link>
             </div>
           </div>
 

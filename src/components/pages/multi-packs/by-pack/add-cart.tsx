@@ -49,12 +49,6 @@ const AddCartMultiPackComponent = (props: Props) => {
 
   const { mutateAsync: addCart } = api.cart.add.useMutation({
     onSuccess: async (data) => {
-      // await utils.cart.checkExistInCart.invalidate({
-      //   albumId:props.albumId,
-      //   trackId:props.trackId
-      // })
-      // await utils.cart.counter.invalidate()
-
       setCart((prev) => [
         ...prev,
         {
@@ -96,15 +90,6 @@ const AddCartMultiPackComponent = (props: Props) => {
 
   return (
     <div className="w-full flex flex-col items-center md:items-start justify-end gap-1 pb-1">
-      {/* <div className='flex items-center justify-center'>
-        <Button
-          variant={'default'}
-          className='bg-transparent -mx-1 hover:bg-transparent focus:bg-transparent cursor-pointer'
-        >
-          <Heart className='w-5 h-5 text-white'/>
-        </Button>
-      </div> */}
-
       {Boolean(checkExist) === false ? (
         <>
           <form
@@ -115,7 +100,7 @@ const AddCartMultiPackComponent = (props: Props) => {
               disabled={isSubmitting}
               type="submit"
               variant={'default'}
-              className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 w-42 md:w-72 py-4 md:py-8 rounded-none text-sm cursor-pointer"
+              className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 w-42 md:w-72 py-4 md:py-8 rounded-none text-sm cursor-pointer text-white"
             >
               {isSubmitting ? (
                 <LoaderIcon className="w-5 h-5 text-white animate-spin" />

@@ -50,9 +50,9 @@ const CartTrackItemComponent = (props: Props) => {
       </div>
 
       {/* THUMBNAIL */}
-      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/[0.06] bg-zinc-950">
+      <div className="h-12 w-12 shrink-0 overflow-hidden border border-white/[0.06] bg-zinc-950">
         <ImageThumbnailComponent
-          image={String(props.track?.user.image ?? props.album?.image)}
+          image={String(props.album?.image ?? props.track?.user.image)}
           rounded={false}
         />
       </div>
@@ -66,7 +66,17 @@ const CartTrackItemComponent = (props: Props) => {
         <h3 className="mt-0.5 truncate text-[11px] text-zinc-600">
           {props.track?.artist ?? props.album?.artist}
         </h3>
-
+        {props.album?.id &&
+        <span
+        className={`
+          rounded-full border px-2 py-1
+          text-[9px] font-semibold uppercase tracking-wider
+          border-pink-400/20 bg-pink-400/10 text-pink-300
+        `}
+      >
+        PACKS
+      </span>
+        }
         {/* MOBILE PRICE */}
         <div className="mt-1 flex items-center gap-2 md:hidden">
           <span className="text-xs font-semibold text-[#B9FF00] tabular-nums">

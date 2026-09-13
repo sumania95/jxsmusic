@@ -62,7 +62,19 @@ const MultiPacksComponent = () => {
   })
 
   const totalItems = Number(album?.count?._count?.id ?? 0)
+  const page = Number(pager) || 1;
+  const total =
+    Number(album?.count._count.id) || 0;
 
+  const start =
+    total === 0
+      ? 0
+      : (page - 1) * limit + 1;
+
+  const end = Math.min(
+    page * limit,
+    total,
+  );
   return (
     <>
       <ProfileMeta
@@ -82,91 +94,36 @@ const MultiPacksComponent = () => {
           {/* ===================================================
               FILTERS
           =================================================== */}
-          <div className="mt-4 flex w-full flex-col gap-3">
-            {/* Search */}
-            <div className="w-full">
-              <div className="mb-1.5 flex items-center gap-2">
-                <span className="h-1 w-1 rounded-full bg-zinc-700" />
+          <section className="rounded-2xl border border-white/10 bg-white/2.5 p-3 sm:p-4">
+            <div className="flex flex-col gap-3">
+              {/* Desktop / tablet filters */}
+              <div className="scrollbar-hide flex lg:justify-between w-full gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 items-center">
+                  <div className="shrink-0">
+                    <DataGenreComponent />
+                  </div>
 
-                <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-600">
-                  Search
-                </span>
-              </div>
-
-              <SearchComponent
-                className="
-                  flex
-                  w-full
-                  items-center
-                  gap-2
-                  rounded-lg
-                  border
-                  border-white/10
-                  bg-[#111518]/40
-                  px-3
-                  py-2
-                  text-xs
-                  text-zinc-400
-                  transition-all
-                  duration-200
-                  focus-within:border-[#B9FF00]/30
-                  focus-within:bg-white/[0.03]
-                "
-                placeholder="Search title, artist...."
-              />
-            </div>
-
-            {/* Genre + Tag */}
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-zinc-700" />
-
-                  <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-600">
-                    Genre
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    rounded-lg
-                    border
-                    border-white/10
-                    bg-[#111518]/40
-                    transition-all
-                    duration-200
-                    hover:border-white/15
-                  "
-                >
-                  <DataGenreComponent />
+                  <div className="shrink-0">
+                    <DataTagComponent />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-zinc-700" />
-
-                  <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-600">
-                    Tag
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    rounded-lg
-                    border
-                    border-white/10
-                    bg-[#111518]/40
-                    transition-all
-                    duration-200
-                    hover:border-white/15
-                  "
-                >
-                  <DataTagComponent />
-                </div>
+              {/* Mobile search */}
+              <div className="w-full">
+                <SearchComponent
+                  className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-[#111518]/40 px-3 py-2 text-zinc-300 transition focus-within:border-[#B9FF00]/30 focus-within:bg-[#111518]/60"
+                  placeholder="Search title, artist..."
+                />
+              </div>
+              <div className="w-full">
+                <h3 className="text-xs text-zinc-400">
+                  Showing {start}–{end} of {total}{" "}
+                  {total === 1 ? "pack" : "packs"}
+                </h3>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
         {/* =====================================================
@@ -247,24 +204,6 @@ const MultiPacksComponent = () => {
                     hover:bg-white/[0.03]
                   "
                 >
-                  {/* Hover indicator */}
-                  <div
-                    className="
-                      absolute
-                      left-0
-                      top-4
-                      z-10
-                      h-5
-                      w-0.5
-                      rounded-full
-                      bg-[#B9FF00]
-                      opacity-0
-                      transition-opacity
-                      duration-200
-                      group-hover:opacity-100
-                    "
-                  />
-
                   <MultiPackItemComponent
                     index_key={index}
                     {...item}
