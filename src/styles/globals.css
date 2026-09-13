@@ -204,6 +204,30 @@
   .group:hover .group-hover\:animate-cart-shake {
     animation: cart-shake 0.4s ease-in-out;
   }
+
+  /* scrollbar */
+
+  .dark-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #111518;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-track {
+    background: #111518;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
 }
 
 

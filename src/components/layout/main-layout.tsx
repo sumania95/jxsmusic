@@ -176,7 +176,7 @@ export default function MainLayout({
           items-start
           justify-evenly
           overflow-y-auto
-          scrollbar-hide
+          dark-scrollbar
         "
       >
 
