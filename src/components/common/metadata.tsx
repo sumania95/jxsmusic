@@ -28,7 +28,7 @@ export const ProfileMeta = ({
 
   const ogImage = image?.startsWith("http")
     ? image
-    : `${siteUrl}${image ?? "images/jeff92-ayan-brand-logo.png"}`;
+    : `${siteUrl}${image ?? "images/track-logo.png"}`;
 
   return (
     <Head>
