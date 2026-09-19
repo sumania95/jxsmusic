@@ -391,7 +391,7 @@ const MyCartComponent = () => {
                               "Checkout cancelled. You can pay the pending order from My Orders.",
                             );
                             void utils.cart.getAll.invalidate()
-                            void router.push("/my-orders?status=ALL");
+                            void router.push("/account?type=orders");
                           }}
                           onError={(error) => {
                             if (
