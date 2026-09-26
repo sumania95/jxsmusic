@@ -28,7 +28,7 @@ export const albumSchema = Yup.object().shape({
     .required("Artists is required"),
 
   price: Yup.number()
-    .min(20000, "Minimum $200.00")
+    .min(1000, "Minimum $10")
     .max(1000000, "Maximum $10,000")
     .required("Price is required"),
 
@@ -71,8 +71,8 @@ export const albumSchema = Yup.object().shape({
       })
     )
     .min(
-      10,
-      "Add at least 10 tracks minimum"
+      5,
+      "Add at least 5 tracks minimum"
     )
     .max(
       150,
