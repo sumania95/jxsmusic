@@ -383,7 +383,7 @@ const TrackUpdateReleasesComponentForm = () => {
         bpm_end:
           formValues.bpm_end,
         energy:
-          track?.energy ?? 5,
+          formValues.energy,
 
         in_key:
           formValues.key,

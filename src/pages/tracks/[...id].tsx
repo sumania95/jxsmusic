@@ -45,7 +45,7 @@ const TrackDetailPage = ({id}:Props) => {
       <ProfileMeta
         title={formatTrackTitle(track.title,track.is_explicit) ?? ""}
         description={track.artist ?? ""}
-        image={track.user.image ?? ""}
+        image={"images/track-logo.png"}
         url={`https://www.jeff92ayansumania.com/tracks/${track.id}`}
         type="profile"
       />
