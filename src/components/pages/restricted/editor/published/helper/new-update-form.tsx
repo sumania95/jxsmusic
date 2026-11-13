@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   CircleAlert,
   Disc3,
@@ -446,7 +446,7 @@ const TrackUpdateReleasesComponentForm = () => {
       });
     },
   });
-
+  const [priceDraft, setPriceDraft] = useState<string | null>(null);
   const busy =
     isSubmitting ||
     isUpdating;
@@ -728,64 +728,30 @@ const TrackUpdateReleasesComponentForm = () => {
 
                 <Input
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="Price"
-                  disabled={busy}
+                  inputMode="decimal"
                   id="price"
                   name="price"
+                  placeholder="Price"
+                  disabled={busy}
                   autoComplete="off"
-                  value={
-                    values.price >
-                      0
-                      ? values.price /
-                      100
-                      : ""
-                  }
-                  onChange={(
-                    event
-                  ) => {
-                    const raw =
-                      event.target.value.replace(
-                        /\D/g,
-                        ""
-                      );
-
-                    if (
-                      raw === ""
-                    ) {
-                      void setFieldValue(
-                        "price",
-                        0
-                      );
-
-                      return;
-                    }
-
-                    void setFieldValue(
-                      "price",
-                      parseInt(
-                        raw,
-                        10
-                      ) * 100
-                    );
-                  }}
-                  onKeyDown={(
-                    event
-                  ) => {
-                    if (
-                      event.key ===
-                      "." ||
-                      event.key ===
-                      ","
-                    ) {
-                      event.preventDefault();
-                    }
-                  }}
-                  onBlur={
-                    handleBlur
-                  }
                   className={`${inputClassName} pl-8`}
+                  value={
+                    priceDraft ?? (values.price > 0 ? (values.price / 100).toFixed(2) : "")
+                  }
+                  onChange={(event) => {
+                    const text = event.currentTarget.value.replace(",", ".");
+                    if (!/^\d*(?:\.\d{0,2})?$/.test(text)) return;
+
+                    const [whole, fraction = ""] = text.split(".");
+                    const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+
+                    setPriceDraft(text);
+                    void setFieldValue("price", cents);
+                  }}
+                  onBlur={(event) => {
+                    setPriceDraft(null);
+                    handleBlur(event);
+                  }}
                 />
               </div>
 

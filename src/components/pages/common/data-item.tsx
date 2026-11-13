@@ -121,20 +121,20 @@ const TrackItemComponent = (props: Props) => {
     ) ?? keyData[0]
 
   const playButton = async () => {
-    if (!session?.user) {
-      toast.info(
-        "Sign in to preview Jeff92 & Ayan Sumania edits.",
-        {
-          action: {
-            label: "Sign in",
-            onClick: () =>
-              void router.push("/auth/login"),
-          },
-        }
-      )
+    // if (!session?.user) {
+    //   toast.info(
+    //     "Sign in to preview Jeff92 & Ayan Sumania edits.",
+    //     {
+    //       action: {
+    //         label: "Sign in",
+    //         onClick: () =>
+    //           void router.push("/auth/login"),
+    //       },
+    //     }
+    //   )
 
-      return
-    }
+    //   return
+    // }
 
     if (player.id === String(props.id)) {
       setPlayer((current) => ({

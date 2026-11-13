@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Check,
   CircleAlert,
@@ -453,7 +453,9 @@ const TrackUploaderComponentForm = () => {
       });
     },
   });
-
+  const [priceText, setPriceText] = useState(() =>
+    values.price > 0 ? (values.price / 100).toFixed(2) : ""
+  );
   const busy =
     isSubmitting ||
     isPublishing;
@@ -740,65 +742,29 @@ const TrackUploaderComponentForm = () => {
                   $
                 </span>
 
+                
                 <Input
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  inputMode="decimal"
                   placeholder="Price"
                   disabled={busy}
                   id="price"
                   name="price"
                   autoComplete="off"
-                  value={
-                    values.price >
-                      0
-                      ? values.price /
-                      100
-                      : ""
-                  }
-                  onChange={(
-                    event
-                  ) => {
-                    const raw =
-                      event.target.value.replace(
-                        /\D/g,
-                        ""
-                      );
+                  value={priceText}
+                  onChange={(event) => {
+                    const text = event.target.value.replace(",", ".");
 
-                    if (
-                      raw === ""
-                    ) {
-                      void setFieldValue(
-                        "price",
-                        0
-                      );
+                    if (!/^\d*(?:\.\d{0,2})?$/.test(text)) return;
 
-                      return;
-                    }
+                    setPriceText(text);
 
-                    void setFieldValue(
-                      "price",
-                      parseInt(
-                        raw,
-                        10
-                      ) * 100
-                    );
+                    const [whole, fraction = ""] = text.split(".");
+                    const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+
+                    void setFieldValue("price", cents);
                   }}
-                  onKeyDown={(
-                    event
-                  ) => {
-                    if (
-                      event.key ===
-                      "." ||
-                      event.key ===
-                      ","
-                    ) {
-                      event.preventDefault();
-                    }
-                  }}
-                  onBlur={
-                    handleBlur
-                  }
+                  onBlur={handleBlur}
                   className={`${inputClassName} pl-8`}
                 />
               </div>
