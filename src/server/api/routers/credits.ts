@@ -7,7 +7,7 @@ import {
 } from "@/server/api/trpc";
 import { createPayPalOrder } from "@/server/paypal";
 
-export const CREDIT_PACK_PRICE = 20_000;
+export const CREDIT_PACK_PRICE = 19_900;
 export const CREDIT_PACK_SIZE = 180;
 
 const accountingProcedure = protectedProcedure.use(async ({ ctx, next }) => {

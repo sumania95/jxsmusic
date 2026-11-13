@@ -8,7 +8,7 @@ import { api } from "@/utils/api";
 
 const CREDIT_PACK_DETAILS = [
   { value: "180", label: "downloads" },
-  { value: "$200", label: "one-time" },
+  { value: "$199", label: "one-time" },
   { value: "Never", label: "expires" },
 ];
 
@@ -52,7 +52,7 @@ export default function CreditsComponent() {
           </h1>
 
           <p className="mt-6 max-w-xl leading-7 text-zinc-400">
-            Buy 180 non-expiring credits for $200 USD. One credit unlocks one
+            Buy 180 non-expiring credits for $199 USD. One credit unlocks one
             individual audio or video edit. Curated music packs remain separate
             purchases.
           </p>
